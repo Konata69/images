@@ -5,7 +5,7 @@ namespace App\Http\Controllers\File;
 use App\Http\Controllers\File;
 use App\Http\Controllers\Controller;
 use Exception;
-use Intervention\Image\Facades\Image;
+use Intervention\Image\Image;
 
 class Photo extends Controller
 {
@@ -42,16 +42,14 @@ class Photo extends Controller
     /**
      * Сохраняем обработанное изображение на диск
      *
-     * @param Image $img экземпляр фасада Image с конкретным изображением
-     * @param array $path массив путей для изображения
+     * @param Image|\Intervention\Image\Facades\Image $img экземпляр фасада Image с конкретным изображением
+     * @param string $path путь до обработанного изображения включая имя файла
      *
      * @return string путь к сохраненному изображению
      */
-    public function savePhoto(Image $img, array $path): string
+    public function savePhoto(Image $img, string $path): string
     {
-        $this->saveImage($img, $path['base_dir'] . $path['name']);
-
-        return $path['url'] . $path['name'];
+        return $this->saveImage($img, $path);
     }
 
     /**

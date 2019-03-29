@@ -77,6 +77,7 @@ class ImageController extends Controller
         }
 
         $file = new UploadedFile($tmpPath, basename($tmpPath));
+        $filename = $file->getFilename();
 
         // получить хеш изображения
         $hash = $this->hasher->hash($tmpPath);
@@ -89,10 +90,11 @@ class ImageController extends Controller
 //            $image = new Image();
 
             // обрезать и сжать изображение
-//            $image = $this->prepareFile($file);
+            $image = $this->prepareFile($file);
 
             // переместить файл изображения из временной папки в обычную
-//            $path['src'] = $this->savePhoto($image, $path);
+            $src = public_path() . $path . '/' . $filename;
+            $this->photo->savePhoto($image, $src);
 
             //TODO Сделать превью изображение
 //            $path['thumb'] = $this->saveThumb($image, $path);
