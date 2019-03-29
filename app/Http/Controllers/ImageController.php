@@ -62,11 +62,11 @@ class ImageController extends Controller
     /**
      * Обработать изображение по ссылке, скачать, если это возможно
      *
-     * @param $url
-     * @param $path
+     * @param string $url
+     * @param string $path
      * @return Image|Builder|Model|object|null
      */
-    public function handleUrlImage($url, $path)
+    public function handleUrlImage(string $url, string $path)
     {
         // скачать изображение по ссылке
         // создает временное изображение в файловой системе
