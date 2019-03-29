@@ -70,6 +70,11 @@ class ImageController extends Controller
     {
         // скачать изображение по ссылке
         // создает временное изображение в файловой системе
+
+        //TODO Вынести создание директорий отдельно
+
+        //TODO Струтктурировать различные компоненты путей файлов
+        // Возможно, выделить в отдельный класс для работы с ними
         $tmpPath = $this->photo->tempPhotoCreate($url, $path);
 
         if (!$tmpPath) {
@@ -87,8 +92,6 @@ class ImageController extends Controller
 
         // если изображение не найдено по хешу - создаем новое
         if (!$image) {
-//            $image = new Image();
-
             // обрезать и сжать изображение
             $image = $this->prepareFile($file);
 
@@ -104,6 +107,13 @@ class ImageController extends Controller
             $this->photo->tempPhotoRemove($tmpPath);
 
             // пишем в базу данные изображения
+            $image = new Image();
+            $image->hash = $hash->toHex();
+            $image->url = $url;
+            $image->is_blocked = false;
+            $image->src = $path . '/' . $filename;;
+            $image->thumb = $path . '/thumb/' . $filename;
+            $image->save();
         }
 
         //TODO Проверить, заблокировано ли изображение по хешу в базе данных
