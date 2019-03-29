@@ -53,6 +53,21 @@ class Photo extends Controller
     }
 
     /**
+     * Сохраняем превью изображения на диск
+     *
+     * @param Image|\Intervention\Image\Facades\Image $img экземпляр фасада Image с конкретным изображением
+     * @param string $path путь до превью изображения включая имя файла
+     *
+     * @return string путь к сохраненному изображению
+     */
+    public function saveThumb(Image $img, string $path): string
+    {
+        $img->resize(400, 300)->crop(400, 300);
+
+        return $this->saveImage($img, $path);
+    }
+
+    /**
      * Сохраняем фотографию по ссылке во временный файл
      *
      * @param string $src ссылка на изображение
@@ -62,11 +77,16 @@ class Photo extends Controller
      */
     public function tempPhotoCreate($src, $path)
     {
+        $thumbPath = public_path() . $path . '/thumb/';
         $path = public_path() . $path . '/temp/';
         $name = uniqid() . '.jpg';
 
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
+        }
+
+        if (!file_exists($thumbPath)) {
+            mkdir($thumbPath, 0777, true);
         }
 
         try {

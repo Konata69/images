@@ -96,8 +96,9 @@ class ImageController extends Controller
             $src = public_path() . $path . '/' . $filename;
             $this->photo->savePhoto($image, $src);
 
-            //TODO Сделать превью изображение
-//            $path['thumb'] = $this->saveThumb($image, $path);
+            // сделать превью изображение
+            $thumb = public_path() . $path . '/thumb/' . $filename;
+            $this->photo->saveThumb($image, $thumb);
 
             //удалить временный файл изображения
             $this->photo->tempPhotoRemove($tmpPath);
