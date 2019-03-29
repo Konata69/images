@@ -70,7 +70,7 @@ class ImageController extends Controller
     {
         // скачать изображение по ссылке
         // создает временное изображение в файловой системе
-        $tmpPath = File\Photo::tempPhotoCreate($url, $path);
+        $tmpPath = $this->photo->tempPhotoCreate($url, $path);
 
         if (!$tmpPath) {
             //TODO файл не скачался - обработать
