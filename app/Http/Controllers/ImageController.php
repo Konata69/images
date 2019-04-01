@@ -8,10 +8,11 @@ use App\Http\Requests\ImageLoad;
 use App\Models\Image;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
 use Jenssegers\ImageHash\ImageHash;
 use Jenssegers\ImageHash\Implementations\DifferenceHash;
+use Throwable;
 
 class ImageController extends Controller
 {
@@ -33,6 +34,8 @@ class ImageController extends Controller
      * Экшен загрузки изображений по ссылкам
      *
      * @param ImageLoad $request
+     *
+     * @return JsonResponse
      */
     public function loadAction(ImageLoad $request)
     {
@@ -40,23 +43,31 @@ class ImageController extends Controller
         // общий для всех изображений
         $path = $this->makePath($request->input());
 
+        // приводим пришедшие ссылки/ссылку к массиву
         $url = $request->input('url');
-
-        // обработать единственную ссылку
+        $urlList = [];
         if (is_string($url)) {
-            $image = $this->handleUrlImage($url, $path);
+            $urlList[] = $url;
+        } elseif (is_array($url)) {
+            $urlList = $url;
         }
 
-        // обработать список ссылок
-        if (is_array($url)) {
-            $imageList = [];
-            // пройтись по ссылкам и достать изображение
-            foreach ($request->input('url') as $url) {
-                $imageList[] = $this->handleUrlImage($url, $path);
+        /** @var array $data json ответ с результатами обработки ссылок на изображения */
+        $data = [];
+
+        // обработать список ссылок, пройтись по ссылкам и достать изображение
+        foreach ($urlList as $url) {
+            try {
+                $image = $this->handleUrlImage($url, $path);
+                $data['imageList'][] = $image;
+            } catch (Throwable $e) {
+                $error['url'] = $url;
+                $error['message'] = $e->getMessage();
+                $data['errorList'][] = $error;
             }
         }
 
-        // отдать данные об изображении
+        return response()->json($data);
     }
 
     /**
@@ -66,6 +77,8 @@ class ImageController extends Controller
      * @param string $path
      *
      * @return Image|Builder|Model|object|null
+     *
+     * @throws \HttpException
      */
     public function handleUrlImage(string $url, string $path)
     {
@@ -79,7 +92,7 @@ class ImageController extends Controller
         $tmpPath = $this->photo->tempPhotoCreate($url, $path);
 
         if (!$tmpPath) {
-            //TODO файл не скачался - обработать
+            throw new \HttpException('Can\'t download file from url: ' . $url);
         }
 
         $file = new UploadedFile($tmpPath, basename($tmpPath));
@@ -112,8 +125,8 @@ class ImageController extends Controller
             $image->hash = $hash->toHex();
             $image->url = $url;
             $image->is_blocked = false;
-            $image->src = $path . '/' . $filename;
-            $image->thumb = $path . '/thumb/' . $filename;
+            $image->src = url('/') . $path . '/' . $filename;
+            $image->thumb = url('/') . $path . '/thumb/' . $filename;
             $image->save();
         }
 
