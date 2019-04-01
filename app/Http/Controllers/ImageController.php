@@ -39,24 +39,24 @@ class ImageController extends Controller
      */
     public function loadAction(ImageLoad $request)
     {
-        // из переданных параметров авто собираем путь сохранения файла
+        // из переданных параметров авто собрать путь сохранения файла
         // общий для всех изображений
         $path = $this->makePath($request->input());
 
-        // приводим пришедшие ссылки/ссылку к массиву
+        // привести пришедшие ссылки/ссылку к массиву
         $url = $request->input('url');
-        $urlList = [];
+        $url_list = [];
         if (is_string($url)) {
-            $urlList[] = $url;
+            $url_list[] = $url;
         } elseif (is_array($url)) {
-            $urlList = $url;
+            $url_list = $url;
         }
 
-        /** @var array $data json ответ с результатами обработки ссылок на изображения */
+        // ответ с результатами обработки ссылок на изображения
         $data = [];
 
         // обработать список ссылок, пройтись по ссылкам и достать изображение
-        foreach ($urlList as $url) {
+        foreach ($url_list as $url) {
             try {
                 $image = $this->handleUrlImage($url, $path);
                 $data['imageList'][] = $image;
@@ -82,29 +82,29 @@ class ImageController extends Controller
      */
     public function handleUrlImage(string $url, string $path)
     {
-        // скачать изображение по ссылке
-        // создает временное изображение в файловой системе
-
         //TODO Вынести создание директорий отдельно
 
         //TODO Струтктурировать различные компоненты путей файлов
         // Возможно, выделить в отдельный класс для работы с ними
-        $tmpPath = $this->photo->tempPhotoCreate($url, $path);
 
-        if (!$tmpPath) {
+        // скачать изображение по ссылке
+        // создать временное изображение в файловой системе
+        $tmp_path = $this->photo->tempPhotoCreate($url, $path);
+
+        if (!$tmp_path) {
             throw new \HttpException('Can\'t download file from url: ' . $url);
         }
 
-        $file = new UploadedFile($tmpPath, basename($tmpPath));
+        $file = new UploadedFile($tmp_path, basename($tmp_path));
         $filename = $file->getFilename();
 
         // получить хеш изображения
-        $hash = $this->hasher->hash($tmpPath);
+        $hash = $this->hasher->hash($tmp_path);
 
         // проверить, есть ли хеш в базе
         $image = Image::query()->where('hash', $hash->toHex())->first();
 
-        // если изображение не найдено по хешу - создаем новое
+        // если изображение не найдено по хешу - создать новое
         if (!$image) {
             // обрезать и сжать изображение
             $image = $this->prepareFile($file);
@@ -117,10 +117,10 @@ class ImageController extends Controller
             $thumb = public_path() . $path . '/thumb/' . $filename;
             $this->photo->saveThumb($image, $thumb);
 
-            //удалить временный файл изображения
-            $this->photo->tempPhotoRemove($tmpPath);
+            // удалить временный файл изображения
+            $this->photo->tempPhotoRemove($tmp_path);
 
-            // пишем в базу данные изображения
+            // записать в базу данные изображения
             $image = new Image();
             $image->hash = $hash->toHex();
             $image->url = $url;
