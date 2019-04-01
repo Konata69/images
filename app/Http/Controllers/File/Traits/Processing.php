@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\File\Traits;
 
-/**
- * Модуль для обработки изображений 
+/*
+ * Модуль для обработки изображений
  * http://image.intervention.io/
  */
 
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Facades\Image;
-/**
+/*
  * Модуль для сжатия изображений
- * https://github.com/spatie/laravel-image-optimizer 
+ * https://github.com/spatie/laravel-image-optimizer
  */
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 
@@ -20,12 +20,13 @@ use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
  *
  * @author Andrew
  */
-trait Processing {
-
+trait Processing
+{
     /**
      * Изменяем размер для большого изображения
-     * 
+     *
      * @param Image $img экземпляр фасада Image с конкретным изображением
+     *
      * @return Image экземпляр фасада Image с конкретным изображением после обработки
      */
     protected function resizeBigPhoto($img)
@@ -45,8 +46,9 @@ trait Processing {
 
     /**
      * Обрезаем изображение под 4:3
-     * 
+     *
      * @param Image $img экземпляр фасада Image с конкретным изображением
+     *
      * @return Image экземпляр фасада Image с конкретным изображением после обработки
      */
     protected function cropFormat($img)
@@ -69,8 +71,9 @@ trait Processing {
 
     /**
      * Поэтапная подготовка файла
-     * 
+     *
      * @param UploadedFile $file экземпляр класса загруженного файла
+     *
      * @return Image экземпляр фасада Image с конкретным изображением после обработки
      */
     protected function prepareFile($file)
@@ -85,9 +88,10 @@ trait Processing {
 
     /**
      * Сохраняем и оптимизируем изображение
-     * 
+     *
      * @param Image $img экземпляр фасада Image с конкретным изображением
      * @param string $img_path путь к сохраняемому изображению
+     *
      * @return string путь к сохраненному изображению
      */
     protected function saveImage($img, $img_path)
@@ -98,5 +102,4 @@ trait Processing {
 
         return $img_path;
     }
-
 }

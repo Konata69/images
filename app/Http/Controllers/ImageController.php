@@ -64,6 +64,7 @@ class ImageController extends Controller
      *
      * @param string $url
      * @param string $path
+     *
      * @return Image|Builder|Model|object|null
      */
     public function handleUrlImage(string $url, string $path)
@@ -111,7 +112,7 @@ class ImageController extends Controller
             $image->hash = $hash->toHex();
             $image->url = $url;
             $image->is_blocked = false;
-            $image->src = $path . '/' . $filename;;
+            $image->src = $path . '/' . $filename;
             $image->thumb = $path . '/thumb/' . $filename;
             $image->save();
         }
@@ -125,6 +126,7 @@ class ImageController extends Controller
      * Собрать путь хранения изображения из переданных параметров авто
      *
      * @param array $params
+     *
      * @return string
      */
     public function makePath(array $params): string
@@ -139,5 +141,4 @@ class ImageController extends Controller
 
         return $path;
     }
-
 }
