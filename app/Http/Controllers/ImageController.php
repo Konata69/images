@@ -59,6 +59,8 @@ class ImageController extends Controller
         foreach ($url_list as $url) {
             try {
                 $image = $this->handleUrlImage($url, $path);
+                $image->src = url('/') . $image->src;
+                $image->thumb = url('/') . $image->thumb;
                 $data['imageList'][] = $image;
             } catch (Throwable $e) {
                 $error['url'] = $url;
@@ -80,10 +82,8 @@ class ImageController extends Controller
      *
      * @throws \HttpException
      */
-    public function handleUrlImage(string $url, string $path)
+    public function handleUrlImage(string $url, string $path, $createThumb = true)
     {
-        //TODO Вынести создание директорий отдельно
-
         //TODO Струтктурировать различные компоненты путей файлов
         // Возможно, выделить в отдельный класс для работы с ними
 
@@ -107,27 +107,31 @@ class ImageController extends Controller
         // если изображение не найдено по хешу - создать новое
         if (!$image) {
             // обрезать и сжать изображение
-            $image = $this->prepareFile($file);
-
+            $file = $this->prepareFile($file);
             // переместить файл изображения из временной папки в обычную
-            $src = public_path() . $path . '/' . $filename;
-            $this->photo->savePhoto($image, $src);
-
-            // сделать превью изображение
-            $thumb = public_path() . $path . '/thumb/' . $filename;
-            $this->photo->saveThumb($image, $thumb);
-
+            $this->photo->savePhoto($file, public_path() . $path . '/' . $filename);
             // удалить временный файл изображения
             $this->photo->tempPhotoRemove($tmp_path);
 
             // записать в базу данные изображения
-            $image = new Image();
-            $image->hash = $hash->toHex();
-            $image->url = $url;
-            $image->is_blocked = false;
-            $image->src = url('/') . $path . '/' . $filename;
-            $image->thumb = url('/') . $path . '/thumb/' . $filename;
-            $image->save();
+            $image = Image::create([
+                'hash' => $hash->toHex(),
+                'url' => $url,
+                'is_blocked' => false,
+                'src' => $path . '/' . $filename,
+            ]);
+
+            // добавить превью, если необходимо
+            if ($createThumb) {
+                $thumb_path = $path . '/thumb/' . $filename;
+                $thumb_path_dir = public_path() . $path . '/thumb/';
+                if (!file_exists($thumb_path_dir)) {
+                    mkdir($thumb_path, 0777, true);
+                }
+                $this->photo->saveThumb($file, public_path() . $thumb_path);
+                $image->thumb = $thumb_path;
+                $image->save();
+            }
         }
 
         //TODO Проверить, заблокировано ли изображение по хешу в базе данных

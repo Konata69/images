@@ -77,16 +77,11 @@ class Photo extends Controller
      */
     public function tempPhotoCreate($src, $path)
     {
-        $thumb_path = public_path() . $path . '/thumb/';
         $path = public_path() . $path . '/temp/';
         $name = uniqid() . '.jpg';
 
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
-        }
-
-        if (!file_exists($thumb_path)) {
-            mkdir($thumb_path, 0777, true);
         }
 
         try {
