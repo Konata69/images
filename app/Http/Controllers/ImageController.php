@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\File\Photo;
 use App\Http\Controllers\File\Traits\Processing;
+use App\Http\Requests\BlockImage;
 use App\Http\Requests\ImageLoad;
 use App\Models\Image;
 use Illuminate\Database\Eloquent\Builder;
@@ -73,10 +74,29 @@ class ImageController extends Controller
     }
 
     /**
+     * Экшен пометки изображения заблокированным по ссылке
+     *
+     * @param BlockImage $request
+     *
+     * @throws \HttpException
+     */
+    public function blockAction(BlockImage $request)
+    {
+        $url = $request->input('url');
+        $path = '/image_blocked';
+
+        // создать временный файл изображения, пометить заблокированным
+        $image = $this->handleUrlImage($url, $path, false);
+        $image->is_blocked = true;
+        $image->save();
+    }
+
+    /**
      * Обработать изображение по ссылке, скачать, если это возможно
      *
      * @param string $url
      * @param string $path
+     * @param bool $createThumb
      *
      * @return Image|Builder|Model|object|null
      *
