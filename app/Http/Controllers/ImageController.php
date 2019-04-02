@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Jenssegers\ImageHash\Hash;
 use Jenssegers\ImageHash\ImageHash;
 use Jenssegers\ImageHash\Implementations\DifferenceHash;
@@ -94,9 +95,20 @@ class ImageController extends Controller
         $path = '/image_blocked';
 
         // создать временный файл изображения, пометить заблокированным
-        $image = $this->handleUrlImage($url, $path, false, false);
-        $image->is_blocked = true;
-        $image->save();
+        $image = $this->handleUrlImage($url, $path, false, true);
+        // существующее изображение придет с выключенным флагом, новое - с включенным
+        if (!$image->is_blocked) {
+            // удалить превью изображения и переместить оригинал в папку к заблокированным изображениям
+            File::move(public_path() . $image->src, public_path() . $path . '/' . basename($image->src));
+            $this->photo->tempPhotoRemove(public_path() . $path . '/temp/' . $image->filename);
+            if ($image->thumb) {
+                $this->photo->tempPhotoRemove(public_path() . $image->thumb);
+                $image->thumb = null;
+            }
+            $image->src = $path . '/' . basename($image->src);
+            $image->is_blocked = true;
+            $image->save();
+        }
         $image->src = url('/') . $image->src;
 
         return response()->json($image);
@@ -108,13 +120,13 @@ class ImageController extends Controller
      * @param string $url
      * @param string $path
      * @param bool $create_thumb
-     * @param bool $search_blocked
+     * @param bool $block_image блокировать ли изображение при обработке
      *
      * @return Image|Builder|Model|object|null
      *
      * @throws \HttpException
      */
-    public function handleUrlImage(string $url, string $path, $create_thumb = true, $search_blocked = true)
+    public function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false)
     {
         //TODO Струтктурировать различные компоненты путей файлов
         // Возможно, выделить в отдельный класс для работы с ними
@@ -138,11 +150,13 @@ class ImageController extends Controller
 
         // если нашли изображение - сразу отдать
         if ($image) {
+            // записать имя временного файла
+            $image->filename = $filename;
             return $image;
         }
 
         // перед обработкой изображения проверяем на похожесть с заблокированными
-        if ($search_blocked) {
+        if (!$block_image) {
             $blocked_image = $this->searchBlocked($hash->toHex());
             // в случае похожести отдать инфу о том, что изображение заблокировано
             if ($blocked_image) {
@@ -163,7 +177,7 @@ class ImageController extends Controller
         $image = Image::create([
             'hash' => $hash->toHex(),
             'url' => $url,
-            'is_blocked' => false,
+            'is_blocked' => $block_image,
             'src' => $path . '/' . $filename,
         ]);
 
