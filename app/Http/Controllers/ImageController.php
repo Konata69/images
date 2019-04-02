@@ -97,6 +97,7 @@ class ImageController extends Controller
         $image = $this->handleUrlImage($url, $path, false, false);
         $image->is_blocked = true;
         $image->save();
+        $image->src = url('/') . $image->src;
 
         return response()->json($image);
     }
