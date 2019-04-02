@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
+use Jenssegers\ImageHash\Hash;
 use Jenssegers\ImageHash\ImageHash;
 use Jenssegers\ImageHash\Implementations\DifferenceHash;
 use Throwable;
@@ -60,13 +61,18 @@ class ImageController extends Controller
         foreach ($url_list as $url) {
             try {
                 $image = $this->handleUrlImage($url, $path);
-                $image->src = url('/') . $image->src;
-                $image->thumb = url('/') . $image->thumb;
-                $data['imageList'][] = $image;
+                // выделить отдельным списком ссылки на заблокированные изображения
+                if ($image->is_blocked) {
+                    $data['blocked_image_list'][] = $image->url;
+                } else {
+                    $image->src = url('/') . $image->src;
+                    $image->thumb = url('/') . $image->thumb;
+                    $data['image_list'][] = $image;
+                }
             } catch (Throwable $e) {
                 $error['url'] = $url;
                 $error['message'] = $e->getMessage();
-                $data['errorList'][] = $error;
+                $data['error_list'][] = $error;
             }
         }
 
@@ -78,6 +84,8 @@ class ImageController extends Controller
      *
      * @param BlockImage $request
      *
+     * @return JsonResponse
+     *
      * @throws \HttpException
      */
     public function blockAction(BlockImage $request)
@@ -86,9 +94,11 @@ class ImageController extends Controller
         $path = '/image_blocked';
 
         // создать временный файл изображения, пометить заблокированным
-        $image = $this->handleUrlImage($url, $path, false);
+        $image = $this->handleUrlImage($url, $path, false, false);
         $image->is_blocked = true;
         $image->save();
+
+        return response()->json($image);
     }
 
     /**
@@ -96,13 +106,14 @@ class ImageController extends Controller
      *
      * @param string $url
      * @param string $path
-     * @param bool $createThumb
+     * @param bool $create_thumb
+     * @param bool $search_blocked
      *
      * @return Image|Builder|Model|object|null
      *
      * @throws \HttpException
      */
-    public function handleUrlImage(string $url, string $path, $createThumb = true)
+    public function handleUrlImage(string $url, string $path, $create_thumb = true, $search_blocked = true)
     {
         //TODO Струтктурировать различные компоненты путей файлов
         // Возможно, выделить в отдельный класс для работы с ними
@@ -124,39 +135,73 @@ class ImageController extends Controller
         // проверить, есть ли хеш в базе
         $image = Image::query()->where('hash', $hash->toHex())->first();
 
-        // если изображение не найдено по хешу - создать новое
-        if (!$image) {
-            // обрезать и сжать изображение
-            $file = $this->prepareFile($file);
-            // переместить файл изображения из временной папки в обычную
-            $this->photo->savePhoto($file, public_path() . $path . '/' . $filename);
-            // удалить временный файл изображения
-            $this->photo->tempPhotoRemove($tmp_path);
+        // если нашли изображение - сразу отдать
+        if ($image) {
+            return $image;
+        }
 
-            // записать в базу данные изображения
-            $image = Image::create([
-                'hash' => $hash->toHex(),
-                'url' => $url,
-                'is_blocked' => false,
-                'src' => $path . '/' . $filename,
-            ]);
+        // перед обработкой изображения проверяем на похожесть с заблокированными
+        if ($search_blocked) {
+            $blocked_image = $this->searchBlocked($hash->toHex());
+            // в случае похожести отдать инфу о том, что изображение заблокировано
+            if ($blocked_image) {
+                $image = new Image(['url' => $url, 'is_blocked' => true]);
 
-            // добавить превью, если необходимо
-            if ($createThumb) {
-                $thumb_path = $path . '/thumb/' . $filename;
-                $thumb_path_dir = public_path() . $path . '/thumb/';
-                if (!file_exists($thumb_path_dir)) {
-                    mkdir($thumb_path, 0777, true);
-                }
-                $this->photo->saveThumb($file, public_path() . $thumb_path);
-                $image->thumb = $thumb_path;
-                $image->save();
+                return $image;
             }
         }
 
-        //TODO Проверить, заблокировано ли изображение по хешу в базе данных
+        // обрезать и сжать изображение
+        $file = $this->prepareFile($file);
+        // переместить файл изображения из временной папки в обычную
+        $this->photo->savePhoto($file, public_path() . $path . '/' . $filename);
+        // удалить временный файл изображения
+        $this->photo->tempPhotoRemove($tmp_path);
+
+        // записать в базу данные изображения
+        $image = Image::create([
+            'hash' => $hash->toHex(),
+            'url' => $url,
+            'is_blocked' => false,
+            'src' => $path . '/' . $filename,
+        ]);
+
+        // добавить превью, если необходимо
+        if ($create_thumb) {
+            $thumb_path = $path . '/thumb/' . $filename;
+            $thumb_path_dir = public_path() . $path . '/thumb/';
+            if (!file_exists($thumb_path_dir)) {
+                mkdir($thumb_path, 0777, true);
+            }
+            $this->photo->saveThumb($file, public_path() . $thumb_path);
+            $image->thumb = $thumb_path;
+            $image->save();
+        }
 
         return $image;
+    }
+
+    /**
+     * Найти похожее изображение среди заблокированных
+     *
+     * @param string $hash хеш оригинала изображения в шестнадцатиричной системе счисления
+     *
+     * @return Image|null модель похожего изображения, если оно найдено
+     */
+    public function searchBlocked(string $hash): ?Image
+    {
+        $image_list = Image::query()->where('is_blocked', true)->get();
+        $hash = Hash::fromHex($hash);
+
+        foreach ($image_list as $image) {
+            $blocked_hash = Hash::fromHex($image->hash);
+            $distance = $this->hasher->distance($hash, $blocked_hash);
+            if ($distance <= 5) {
+                return $image;
+            }
+        }
+
+        return null;
     }
 
     /**

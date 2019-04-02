@@ -24,7 +24,7 @@ class BlockImage extends FormRequest
     public function rules()
     {
         return [
-            'url' => 'required|string'
+            'url' => 'required|string',
         ];
     }
 }
