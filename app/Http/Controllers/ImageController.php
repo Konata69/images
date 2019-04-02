@@ -171,7 +171,7 @@ class ImageController extends Controller
             $thumb_path = $path . '/thumb/' . $filename;
             $thumb_path_dir = public_path() . $path . '/thumb/';
             if (!file_exists($thumb_path_dir)) {
-                mkdir($thumb_path, 0777, true);
+                mkdir($thumb_path_dir, 0777, true);
             }
             $this->photo->saveThumb($file, public_path() . $thumb_path);
             $image->thumb = $thumb_path;
