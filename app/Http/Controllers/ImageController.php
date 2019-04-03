@@ -116,11 +116,7 @@ class ImageController extends Controller
     public function byUrlView()
     {
         // придет ссылка или массив ссылок (внешние ссылки url)
-        // получаем хеш файла по ссылке
-
-        // ? как получить хеш по ссылке:
-        // поиск в бд
-        // запрос изображения и расчет хеша
+        // получаем хеш файла по ссылке (hash_file)
 
         // ищем хеш в базе
         // если нашли - отдаем данные об изображении
@@ -207,11 +203,13 @@ class ImageController extends Controller
         $file = new UploadedFile($tmp_path, basename($tmp_path));
         $filename = $file->getFilename();
 
-        // получить хеш изображения
-        $hash = $this->hasher->hash($tmp_path);
+        // получить хеш sha256
+        $hash = hash_file('sha256', $tmp_path);
+        // получить прецептивный хеш изображения
+        $image_hash = $this->hasher->hash($tmp_path);
 
         // проверить, есть ли хеш в базе
-        $image = Image::query()->where('hash', $hash->toHex())->first();
+        $image = Image::query()->where('hash', $hash)->first();
 
         // если нашли изображение - сразу отдать
         if ($image) {
@@ -223,7 +221,7 @@ class ImageController extends Controller
 
         // перед обработкой изображения проверяем на похожесть с заблокированными
         if (!$block_image) {
-            $blocked_image = $this->searchBlocked($hash->toHex());
+            $blocked_image = $this->searchBlocked($image_hash->toHex());
             // в случае похожести отдать инфу о том, что изображение заблокировано
             if ($blocked_image) {
                 $image = new Image(['url' => $url, 'is_blocked' => true]);
@@ -241,7 +239,8 @@ class ImageController extends Controller
 
         // записать в базу данные изображения
         $image = Image::create([
-            'hash' => $hash->toHex(),
+            'hash' => $hash,
+            'image_hash' => $image_hash->toHex(),
             'url' => $url,
             'is_blocked' => $block_image,
             'src' => $path . '/' . $filename,
@@ -265,18 +264,18 @@ class ImageController extends Controller
     /**
      * Найти похожее изображение среди заблокированных
      *
-     * @param string $hash хеш оригинала изображения в шестнадцатиричной системе счисления
+     * @param string $image_hash прецептивный хеш оригинала изображения в шестнадцатиричной системе счисления
      *
      * @return Image|null модель похожего изображения, если оно найдено
      */
-    public function searchBlocked(string $hash): ?Image
+    public function searchBlocked(string $image_hash): ?Image
     {
         $image_list = Image::query()->where('is_blocked', true)->get();
-        $hash = Hash::fromHex($hash);
+        $image_hash = Hash::fromHex($image_hash);
 
         foreach ($image_list as $image) {
-            $blocked_hash = Hash::fromHex($image->hash);
-            $distance = $this->hasher->distance($hash, $blocked_hash);
+            $blocked_image_hash = Hash::fromHex($image->image_hash);
+            $distance = $this->hasher->distance($image_hash, $blocked_image_hash);
             if ($distance <= 5) {
                 return $image;
             }
