@@ -28,6 +28,8 @@ class ImageController extends Controller
     /** @var Photo $photo */
     public $photo;
 
+    public $hash_algo = 'sha256';
+
     public function __construct(Photo $photo)
     {
         $this->hasher = new ImageHash(new DifferenceHash());
@@ -112,15 +114,23 @@ class ImageController extends Controller
 
     /**
      * Получить информацию об изображения по переданным ссылкам
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
      */
-    public function byUrlView()
+    public function byUrlView(Request $request)
     {
-        // придет ссылка или массив ссылок (внешние ссылки url)
-        // получаем хеш файла по ссылке (hash_file)
+        $url_list = $this->toList($request->input('url'));
+        // получить список хешей
+        $hash_list = [];
+        foreach ($url_list as $url) {
+            $hash_list = hash_file($this->hash_algo, $url);
+        }
 
-        // ищем хеш в базе
-        // если нашли - отдаем данные об изображении
-        // если не нашли - сообщение: файл не найден
+        $data = $this->findImageByHashList($hash_list);
+
+        return response()->json($data);
     }
 
     /**
@@ -134,6 +144,20 @@ class ImageController extends Controller
     {
         // найти изображения по списку хешей, выделить ненайденные хеши
         $hash_list = $this->toList($request->input('hash'));
+        $data = $this->findImageByHashList($hash_list);
+
+        return response()->json($data);
+    }
+
+    /**
+     * Поиск информации об изображениях по списку хешей
+     *
+     * @param array $hash_list
+     *
+     * @return array
+     */
+    public function findImageByHashList(array $hash_list): array
+    {
         $image_list = Image::query()->whereIn('hash', $hash_list)->get();
         $not_found_hash_list = array_diff($hash_list, $image_list->pluck('hash')->toArray());
 
@@ -152,7 +176,7 @@ class ImageController extends Controller
             $data['not_found_hash_list'] = $not_found_hash_list;
         }
 
-        return response()->json($data);
+        return $data;
     }
 
     /**
@@ -203,8 +227,8 @@ class ImageController extends Controller
         $file = new UploadedFile($tmp_path, basename($tmp_path));
         $filename = $file->getFilename();
 
-        // получить хеш sha256
-        $hash = hash_file('sha256', $tmp_path);
+        // получить хеш
+        $hash = hash_file($this->hash_algo, $tmp_path);
         // получить прецептивный хеш изображения
         $image_hash = $this->hasher->hash($tmp_path);
 
