@@ -19,3 +19,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('/image/load', 'ImageController@loadAction')->name('image-load-action');
 Route::post('/image/block', 'ImageController@blockAction')->name('image-block-action');
+Route::post('/image/by-url', 'ImageController@byUrlView')->name('image-by-url-view');
+Route::post('/image/by-hash', 'ImageController@byHashView')->name('image-by-hash-view');

@@ -10,6 +10,7 @@ use App\Models\Image;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Jenssegers\ImageHash\Hash;
@@ -48,12 +49,7 @@ class ImageController extends Controller
 
         // привести пришедшие ссылки/ссылку к массиву
         $url = $request->input('url');
-        $url_list = [];
-        if (is_string($url)) {
-            $url_list[] = $url;
-        } elseif (is_array($url)) {
-            $url_list = $url;
-        }
+        $url_list = $this->toList($url);
 
         // ответ с результатами обработки ссылок на изображения
         $data = [];
@@ -115,6 +111,75 @@ class ImageController extends Controller
     }
 
     /**
+     * Получить информацию об изображения по переданным ссылкам
+     */
+    public function byUrlView()
+    {
+        // придет ссылка или массив ссылок (внешние ссылки url)
+        // получаем хеш файла по ссылке
+
+        // ? как получить хеш по ссылке:
+        // поиск в бд
+        // запрос изображения и расчет хеша
+
+        // ищем хеш в базе
+        // если нашли - отдаем данные об изображении
+        // если не нашли - сообщение: файл не найден
+    }
+
+    /**
+     * Экшен запроса изображений по списку хешей
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function byHashView(Request $request)
+    {
+        // найти изображения по списку хешей, выделить ненайденные хеши
+        $hash_list = $this->toList($request->input('hash'));
+        $image_list = Image::query()->whereIn('hash', $hash_list)->get();
+        $not_found_hash_list = array_diff($hash_list, $image_list->pluck('hash')->toArray());
+
+        // дополнить ссылки на изображения и превью (если есть)
+        $image_list->map(function (Image $image) {
+            $image->src = url('/') . $image->src;
+            $image->thumb = !empty($image->thumb) ? url('/') . $image->thumb : $image->thumb;
+
+            return $image;
+        });
+
+        // данные об изображениях
+        $data = [];
+        $data['image_list'] = $image_list;
+        if ($not_found_hash_list) {
+            $data['not_found_hash_list'] = $not_found_hash_list;
+        }
+
+        return response()->json($data);
+    }
+
+    /**
+     * Привести переменную к массиву (массив с одним элементом)
+     * В случае, если переменная является массивом - вернуть без изменений
+     *
+     * @param $var
+     *
+     * @return array
+     */
+    public function toList($var): array
+    {
+        $list = [];
+        if (!is_array($var)) {
+            $list[] = $var;
+        } else {
+            $list = $var;
+        }
+
+        return $list;
+    }
+
+    /**
      * Обработать изображение по ссылке, скачать, если это возможно
      *
      * @param string $url
@@ -152,6 +217,7 @@ class ImageController extends Controller
         if ($image) {
             // записать имя временного файла
             $image->filename = $filename;
+
             return $image;
         }
 
