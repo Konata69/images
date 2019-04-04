@@ -7,7 +7,7 @@ use App\Http\Controllers\File\Traits\Processing;
 use App\Http\Requests\BlockImage;
 use App\Http\Requests\ImageLoad;
 use App\Models\Image;
-use App\Services\Translit;
+use App\Services\ImageService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -26,18 +26,18 @@ class ImageController extends Controller
     /** @var ImageHash $hasher */
     public $hasher;
 
-    /** @var Translit $translit */
-    public $translit;
+    /** @var ImageService $image_service */
+    public $image_service;
 
     /** @var Photo $photo */
     public $photo;
 
     public $hash_algo = 'sha256';
 
-    public function __construct(Photo $photo, Translit $translit)
+    public function __construct(Photo $photo, ImageService $image_service)
     {
         $this->hasher = new ImageHash(new DifferenceHash());
-        $this->translit = $translit;
+        $this->image_service = $image_service;
         $this->photo = $photo;
     }
 
@@ -52,7 +52,7 @@ class ImageController extends Controller
     {
         // из переданных параметров авто собрать путь сохранения файла
         // общий для всех изображений
-        $path = $this->makePath($request->only(Image::getAutoParamList()));
+        $path = $this->image_service->makePath($request->only(Image::getAutoParamList()));
 
         // привести пришедшие ссылки/ссылку к массиву
         $url = $request->input('url');
@@ -311,31 +311,5 @@ class ImageController extends Controller
         }
 
         return null;
-    }
-
-    /**
-     * Собрать путь хранения изображения из переданных параметров авто
-     *
-     * @param array $params
-     *
-     * @return string
-     */
-    public function makePath(array $params): string
-    {
-        // транслитерация в snake_case
-        $params = array_map(function ($param) {
-            return !empty($param) ? $this->translit->translit($param) : 'default';
-        }, $params);
-
-        $path = '/image';
-        $path .= '/' . $params['mark'];
-        $path .= '/' . $params['model'];
-        $path .= '/' . $params['body'];
-        $path .= '/' . $params['generation'];
-        $path .= '/' . $params['complectation'];
-        $path .= '/' . $params['color'];
-        $path .= '/' . $params['body_group'];
-
-        return $path;
     }
 }
