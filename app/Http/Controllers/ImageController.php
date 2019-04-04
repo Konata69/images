@@ -192,7 +192,7 @@ class ImageController extends Controller
      *
      * @return array
      */
-    public function toList($var): array
+    protected function toList($var): array
     {
         $list = [];
         if (!is_array($var)) {
@@ -250,7 +250,8 @@ class ImageController extends Controller
 
         // перед обработкой изображения проверяем на похожесть с заблокированными
         if (!$block_image) {
-            $blocked_image = $this->searchBlocked($image_hash->toHex());
+            $image_list = Image::query()->where('is_blocked', true)->get();
+            $blocked_image = $this->image_service->searchBlocked($image_hash->toHex(), $image_list);
             // в случае похожести отдать инфу о том, что изображение заблокировано
             if ($blocked_image) {
                 $image = new Image(['url' => $url, 'is_blocked' => true]);
@@ -288,28 +289,5 @@ class ImageController extends Controller
         }
 
         return $image;
-    }
-
-    /**
-     * Найти похожее изображение среди заблокированных
-     *
-     * @param string $image_hash прецептивный хеш оригинала изображения в шестнадцатиричной системе счисления
-     *
-     * @return Image|null модель похожего изображения, если оно найдено
-     */
-    public function searchBlocked(string $image_hash): ?Image
-    {
-        $image_list = Image::query()->where('is_blocked', true)->get();
-        $image_hash = Hash::fromHex($image_hash);
-
-        foreach ($image_list as $image) {
-            $blocked_image_hash = Hash::fromHex($image->image_hash);
-            $distance = $this->hasher->distance($image_hash, $blocked_image_hash);
-            if ($distance <= 5) {
-                return $image;
-            }
-        }
-
-        return null;
     }
 }

@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Image;
 use ElForastero\Transliterate\Transliterator;
 use Illuminate\Support\Str;
+use Jenssegers\ImageHash\Hash;
+use Jenssegers\ImageHash\ImageHash;
 
 class ImageService
 {
@@ -12,9 +15,15 @@ class ImageService
      */
     protected $transliterator;
 
-    public function __construct(Transliterator $transliterator)
+    /**
+     * @var ImageHash $hasher
+     */
+    protected $hasher;
+
+    public function __construct(Transliterator $transliterator, ImageHash $hasher)
     {
         $this->transliterator = $transliterator;
+        $this->hasher = $hasher;
     }
 
     /**
@@ -56,5 +65,28 @@ class ImageService
         $path .= '/' . $params['body_group'];
 
         return $path;
+    }
+
+    /**
+     * Найти похожее изображение среди заблокированных
+     *
+     * @param string $image_hash прецептивный хеш оригинала изображения в шестнадцатиричной системе счисления
+     * @param Image[] $image_list
+     *
+     * @return Image|null модель похожего изображения, если оно найдено
+     */
+    public function searchBlocked(string $image_hash, array $image_list): ?Image
+    {
+        $image_hash = Hash::fromHex($image_hash);
+
+        foreach ($image_list as $image) {
+            $blocked_image_hash = Hash::fromHex($image->image_hash);
+            $distance = $this->hasher->distance($image_hash, $blocked_image_hash);
+            if ($distance <= 5) {
+                return $image;
+            }
+        }
+
+        return null;
     }
 }

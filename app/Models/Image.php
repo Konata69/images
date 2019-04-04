@@ -10,7 +10,7 @@ class Image extends Model
 
     public $filename;
 
-    protected $fillable = ['url', 'hash', 'src', 'thumb', 'is_blocked'];
+    protected $fillable = ['url', 'hash', 'src', 'thumb', 'is_blocked', 'image_hash'];
 
     /**
      * Получить список параметров авто
