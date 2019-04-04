@@ -175,6 +175,9 @@ return [
 
         //Работа с изображениями
         Intervention\Image\ImageServiceProvider::class,
+
+        //Транслитерация
+        ElForastero\Transliterate\ServiceProvider::class,
     ],
 
     /*
@@ -224,5 +227,8 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
+
+        //Транслитерация
+        'Transliterate' => ElForastero\Transliterate\Facade::class,
     ],
 ];

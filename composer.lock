@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "06ed90610cadd8144f47b6458efd5eaa",
+    "content-hash": "cd4f9e8c55fee1d40c0b0fce87aa588d",
     "packages": [
         {
             "name": "dnoegel/php-xdg-base-dir",
@@ -265,6 +265,65 @@
                 "validator"
             ],
             "time": "2018-12-04T22:38:24+00:00"
+        },
+        {
+            "name": "elforastero/transliterate",
+            "version": "2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ElForastero/Transliterate.git",
+                "reference": "6f7d1d88440f7be3cc0f91f2a06b2374fece0832"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ElForastero/Transliterate/zipball/6f7d1d88440f7be3cc0f91f2a06b2374fece0832",
+                "reference": "6f7d1d88440f7be3cc0f91f2a06b2374fece0832",
+                "shasum": ""
+            },
+            "require": {
+                "ext-intl": "*",
+                "illuminate/support": "~5",
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "brainmaestro/composer-git-hooks": "^2.6",
+                "friendsofphp/php-cs-fixer": "^2.13",
+                "orchestra/testbench": "^3.7",
+                "phpunit/phpunit": "^7.4"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "ElForastero\\Transliterate\\ServiceProvider"
+                    ],
+                    "aliases": {
+                        "Transliterate": "ElForastero\\Transliterate\\Facade"
+                    }
+                },
+                "hooks": {
+                    "pre-commit": [
+                        "php-cs-fixer fix ."
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "ElForastero\\Transliterate\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Eugene Dzhumak",
+                    "email": "elforastero@ya.ru"
+                }
+            ],
+            "description": "Transliteration package for laravel 5",
+            "time": "2018-12-08T13:31:29+00:00"
         },
         {
             "name": "erusev/parsedown",

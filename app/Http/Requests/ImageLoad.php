@@ -30,6 +30,7 @@ class ImageLoad extends FormRequest
             'generation' => 'required|string',
             'complectation' => 'required|string',
             'color' => 'required|string',
+            'body_group' => 'required|string',
             'url' => 'required',
         ];
     }
