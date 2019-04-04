@@ -24,13 +24,13 @@ class ImageLoad extends FormRequest
     public function rules()
     {
         return [
-            'mark' => 'required|string',
-            'model' => 'required|string',
-            'body' => 'required|string',
-            'generation' => 'required|string',
-            'complectation' => 'required|string',
-            'color' => 'required|string',
-            'body_group' => 'required|string',
+            'mark' => 'nullable|string',
+            'model' => 'nullable|string',
+            'body' => 'nullable|string',
+            'generation' => 'nullable|string',
+            'complectation' => 'nullable|string',
+            'color' => 'nullable|string',
+            'body_group' => 'nullable|string',
             'url' => 'required',
         ];
     }
