@@ -7,14 +7,13 @@ use App\Http\Controllers\File\Traits\Processing;
 use App\Http\Requests\BlockImage;
 use App\Http\Requests\ImageLoad;
 use App\Models\Image;
-use ElForastero\Transliterate\Transliterator;
+use App\Services\Translit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use Jenssegers\ImageHash\Hash;
 use Jenssegers\ImageHash\ImageHash;
 use Jenssegers\ImageHash\Implementations\DifferenceHash;
@@ -27,18 +26,18 @@ class ImageController extends Controller
     /** @var ImageHash $hasher */
     public $hasher;
 
-    /** @var Transliterator $transliterator */
-    public $transliterator;
+    /** @var Translit $translit */
+    public $translit;
 
     /** @var Photo $photo */
     public $photo;
 
     public $hash_algo = 'sha256';
 
-    public function __construct(Photo $photo, Transliterator $transliterator)
+    public function __construct(Photo $photo, Translit $translit)
     {
         $this->hasher = new ImageHash(new DifferenceHash());
-        $this->transliterator = $transliterator;
+        $this->translit = $translit;
         $this->photo = $photo;
     }
 
@@ -325,7 +324,7 @@ class ImageController extends Controller
     {
         // транслитерация в snake_case
         $params = array_map(function ($param) {
-            return !empty($param) ? $this->translit($param) : 'default';
+            return !empty($param) ? $this->translit->translit($param) : 'default';
         }, $params);
 
         $path = '/image';
@@ -338,20 +337,5 @@ class ImageController extends Controller
         $path .= '/' . $params['body_group'];
 
         return $path;
-    }
-
-    /**
-     * Транлитерировать строку в snake_case
-     *
-     * @param string $str
-     *
-     * @return string
-     */
-    public function translit(string $str): string
-    {
-        $str = $this->transliterator->make($str);
-        $str = Str::slug($str, '_');
-
-        return $str;
     }
 }
