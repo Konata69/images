@@ -11,9 +11,16 @@ php artisan db:seed
 php artisan serve
 ```
 
+## Аутентификация
+
+basic http authentication (base64(username:password))
+
 Учетная запись (создается сидером):
 - admin@test.loc
 - password
+
+ссылка на Postman коллекцию:
+https://www.getpostman.com/collections/b416f25feef63ee3a900
 
 ## Api
 POST api/image/block - блокировать изображение по ссылке
