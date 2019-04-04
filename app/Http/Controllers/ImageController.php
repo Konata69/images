@@ -129,11 +129,18 @@ class ImageController extends Controller
         $url_list = $this->toList($request->input('url'));
         // получить список хешей
         $hash_list = [];
+        $data = [];
         foreach ($url_list as $url) {
-            $hash_list[] = hash_file($this->hash_algo, $url);
+            try {
+                $hash_list[] = hash_file($this->hash_algo, $url);
+            } catch (Throwable $e) {
+                $error['url'] = $url;
+                $error['message'] = $e->getMessage();
+                $data['error_list'][] = $error;
+            }
         }
 
-        $data = $this->findImageByHashList($hash_list);
+        $data = array_merge($this->findImageByHashList($hash_list), $data);
 
         return response()->json($data);
     }
