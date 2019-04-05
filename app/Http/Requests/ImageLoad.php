@@ -30,7 +30,6 @@ class ImageLoad extends FormRequest
             'generation' => 'nullable|string',
             'complectation' => 'nullable|string',
             'color' => 'nullable|string',
-            'body_group' => 'nullable|string',
             'url' => 'required',
         ];
     }

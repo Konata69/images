@@ -26,7 +26,6 @@ class Image extends Model
             'generation',
             'complectation',
             'color',
-            'body_group',
         ];
     }
 }

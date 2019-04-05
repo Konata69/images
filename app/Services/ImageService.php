@@ -62,7 +62,6 @@ class ImageService
         $path .= '/' . $params['generation'];
         $path .= '/' . $params['complectation'];
         $path .= '/' . $params['color'];
-        $path .= '/' . $params['body_group'];
 
         return $path;
     }
