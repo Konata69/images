@@ -168,7 +168,7 @@ class ImageController extends Controller
      */
     public function findImageByHashList(array $hash_list): array
     {
-        $image_list = Image::query()->whereIn('hash', $hash_list)->get();
+        $image_list = Image::whereIn('hash', $hash_list)->get();
         $not_found_hash_list = array_diff($hash_list, $image_list->pluck('hash')->toArray());
 
         // дополнить ссылки на изображения и превью (если есть)
@@ -223,7 +223,7 @@ class ImageController extends Controller
         $image_hash = $this->hasher->hash($tmp_path);
 
         // проверить, есть ли хеш в базе
-        $image = Image::query()->where('hash', $hash)->first();
+        $image = Image::where('hash', $hash)->first();
 
         // если нашли изображение - сразу отдать
         if ($image) {
@@ -235,8 +235,7 @@ class ImageController extends Controller
 
         // перед обработкой изображения проверяем на похожесть с заблокированными
         if (!$block_image) {
-            $image_list = Image::query()->where('is_blocked', true)->get();
-            $blocked_image = $this->image_service->searchBlocked($image_hash->toHex(), $image_list);
+            $blocked_image = $this->image_service->searchBlocked($image_hash->toHex(), Image::getBlockedImageHashList());
             // в случае похожести отдать инфу о том, что изображение заблокировано
             if ($blocked_image) {
                 $image = new Image(['url' => $url, 'is_blocked' => true]);

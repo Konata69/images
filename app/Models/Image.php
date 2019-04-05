@@ -4,6 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Class Image
+ *
+ * @package App\Models
+ */
 class Image extends Model
 {
     public $timestamps = false;
@@ -27,5 +32,19 @@ class Image extends Model
             'complectation',
             'color',
         ];
+    }
+
+    /**
+     * Получить список прецептивных хешей заблокированных изображений
+     *
+     * @return array
+     */
+    public static function getBlockedImageHashList()
+    {
+        return static::query()
+            ->select('image_hash')
+            ->where('is_blocked', true)
+            ->pluck('image_hash')
+            ->toArray();
     }
 }

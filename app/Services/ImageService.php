@@ -70,19 +70,19 @@ class ImageService
      * Найти похожее изображение среди заблокированных
      *
      * @param string $image_hash прецептивный хеш оригинала изображения в шестнадцатиричной системе счисления
-     * @param Image[] $image_list
+     * @param array $blocked_image_hash_list - список прецептивных хешей заблокированных изображений
      *
-     * @return Image|null модель похожего изображения, если оно найдено
+     * @return string|null
      */
-    public function searchBlocked(string $image_hash, array $image_list): ?Image
+    public function searchBlocked(string $image_hash, array $blocked_image_hash_list): ?string
     {
         $image_hash = Hash::fromHex($image_hash);
 
-        foreach ($image_list as $image) {
-            $blocked_image_hash = Hash::fromHex($image->image_hash);
+        foreach ($blocked_image_hash_list as $blocked_image_hash) {
+            $blocked_image_hash = Hash::fromHex($blocked_image_hash);
             $distance = $this->hasher->distance($image_hash, $blocked_image_hash);
             if ($distance <= 5) {
-                return $image;
+                return $blocked_image_hash->toHex();
             }
         }
 

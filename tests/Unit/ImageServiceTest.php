@@ -36,10 +36,9 @@ class ImageServiceTest extends TestCase
             'generation' => null,
             'complectation' => '123',
             'color' => 'сер-бур-черный',
-            'body_group' => 'body_group',
         ];
 
-        $expected = '/image/marka/model/default/default/123/ser_bur_cherniy/body_group';
+        $expected = '/image/marka/model/default/default/123/ser_bur_cherniy';
 
         $this->assertEquals($this->image_service->makePath($param_list), $expected);
     }
@@ -48,31 +47,21 @@ class ImageServiceTest extends TestCase
     {
         $blocked_image_hash = '173c4bc9ebab8634';
 
-        $image_blocked = new Image([
-            'id' => 1,
-            'image_hash' => '373c4bc9ebab8634',
-        ]);
-
-        $image = new Image([
-            'id' => 2,
-            'image_hash' => '94817445560e6b4d',
-        ]);
-
-        $image_list[] = $image_blocked;
-        $image_list[] = $image;
+        $image_hash_list[1] = '373c4bc9ebab8634';
+        $image_hash_list[2] = '94817445560e6b4d';
 
         // отличие в 1 символ
-        $result = $this->image_service->searchBlocked($blocked_image_hash, $image_list);
-        $this->assertEquals($image_blocked, $result);
+        $result = $this->image_service->searchBlocked($blocked_image_hash, $image_hash_list);
+        $this->assertEquals($image_hash_list[1], $result);
 
         // полное совпадение
         $blocked_image_hash = '373c4bc9ebab8634';
-        $result = $this->image_service->searchBlocked($blocked_image_hash, $image_list);
-        $this->assertEquals($image_blocked, $result);
+        $result = $this->image_service->searchBlocked($blocked_image_hash, $image_hash_list);
+        $this->assertEquals($image_hash_list[1], $result);
 
         // отличие в 4 символа
         $blocked_image_hash = '11114bc9ebab8634';
-        $result = $this->image_service->searchBlocked($blocked_image_hash, $image_list);
+        $result = $this->image_service->searchBlocked($blocked_image_hash, $image_hash_list);
         $this->assertNull($result);
     }
 }
