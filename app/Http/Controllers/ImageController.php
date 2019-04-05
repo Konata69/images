@@ -54,9 +54,7 @@ class ImageController extends Controller
         // общий для всех изображений
         $path = $this->image_service->makePath($request->only(Image::getAutoParamList()));
 
-        // привести пришедшие ссылки/ссылку к массиву
-        $url = $request->input('url');
-        $url_list = $this->toList($url);
+        $url_list = (array) $request->url;
 
         // ответ с результатами обработки ссылок на изображения
         $data = [];
@@ -126,7 +124,7 @@ class ImageController extends Controller
      */
     public function byUrlView(Request $request)
     {
-        $url_list = $this->toList($request->input('url'));
+        $url_list = (array) $request->url;
         // получить список хешей
         $hash_list = [];
         $data = [];
@@ -155,7 +153,7 @@ class ImageController extends Controller
     public function byHashView(Request $request)
     {
         // найти изображения по списку хешей, выделить ненайденные хеши
-        $hash_list = $this->toList($request->input('hash'));
+        $hash_list = (array) $request->hash;
         $data = $this->findImageByHashList($hash_list);
 
         return response()->json($data);
@@ -189,26 +187,6 @@ class ImageController extends Controller
         }
 
         return $data;
-    }
-
-    /**
-     * Привести переменную к массиву (массив с одним элементом)
-     * В случае, если переменная является массивом - вернуть без изменений
-     *
-     * @param $var
-     *
-     * @return array
-     */
-    protected function toList($var): array
-    {
-        $list = [];
-        if (!is_array($var)) {
-            $list[] = $var;
-        } else {
-            $list = $var;
-        }
-
-        return $list;
     }
 
     /**
