@@ -89,6 +89,7 @@ class ImageService
         foreach ($blocked_image_hash_list as $blocked_image_hash) {
             $blocked_image_hash = Hash::fromHex($blocked_image_hash);
             $distance = $this->hasher->distance($image_hash, $blocked_image_hash);
+
             if ($distance <= 5) {
                 return $blocked_image_hash->toHex();
             }

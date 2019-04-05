@@ -18,6 +18,11 @@ use Jenssegers\ImageHash\ImageHash;
 use Jenssegers\ImageHash\Implementations\DifferenceHash;
 use Throwable;
 
+/**
+ * Загрузка, запрос и блокировка изображений
+ *
+ * @package App\Http\Controllers
+ */
 class ImageController extends Controller
 {
     use Processing;
@@ -111,19 +116,23 @@ class ImageController extends Controller
 
         // создать временный файл изображения, пометить заблокированным
         $image = $this->handleUrlImage($url, $path, false, true);
+
         // существующее изображение придет с выключенным флагом, новое - с включенным
         if (!$image->is_blocked) {
             // удалить превью изображения и переместить оригинал в папку к заблокированным изображениям
             File::move(public_path() . $image->src, public_path() . $path . '/' . basename($image->src));
             $this->photo->tempPhotoRemove(public_path() . $path . '/temp/' . $image->filename);
+
             if ($image->thumb) {
                 $this->photo->tempPhotoRemove(public_path() . $image->thumb);
                 $image->thumb = null;
             }
+
             $image->src = $path . '/' . basename($image->src);
             $image->is_blocked = true;
             $image->save();
         }
+
         $image->src = url('/') . $image->src;
 
         return response()->json($image);
@@ -139,9 +148,11 @@ class ImageController extends Controller
     public function byUrlView(Request $request)
     {
         $url_list = (array) $request->url;
+
         // получить список хешей
         $hash_list = [];
         $data = [];
+
         foreach ($url_list as $url) {
             try {
                 $hash_list[] = hash_file($this->hash_algo, $url);
@@ -194,6 +205,7 @@ class ImageController extends Controller
         // данные об изображениях
         $data = [];
         $data['image'] = $image_list;
+
         if ($not_found_hash_list) {
             $data['not_found'] = $not_found_hash_list;
         }
@@ -215,9 +227,6 @@ class ImageController extends Controller
      */
     public function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false)
     {
-        //TODO Струтктурировать различные компоненты путей файлов
-        // Возможно, выделить в отдельный класс для работы с ними
-
         // скачать изображение по ссылке
         // создать временное изображение в файловой системе
         $tmp_path = $this->photo->tempPhotoCreate($url, $path);
@@ -248,6 +257,7 @@ class ImageController extends Controller
         // перед обработкой изображения проверяем на похожесть с заблокированными
         if (!$block_image) {
             $blocked_image = $this->image_service->searchBlocked($image_hash->toHex(), Image::getBlockedImageHashList());
+
             // в случае похожести отдать инфу о том, что изображение заблокировано
             if ($blocked_image) {
                 $image = new Image(['url' => $url, 'is_blocked' => true]);
@@ -309,9 +319,11 @@ class ImageController extends Controller
     {
         $thumb_path = $path . '/thumb/' . $filename;
         $thumb_path_dir = public_path() . $path . '/thumb/';
+
         if (!file_exists($thumb_path_dir)) {
             mkdir($thumb_path_dir, 0777, true);
         }
+
         $this->photo->saveThumb($file, public_path() . $thumb_path);
         $image->thumb = $thumb_path;
         $image->save();
