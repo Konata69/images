@@ -56,12 +56,12 @@ class ImageService
         }, $params);
 
         $path = '/image';
-        $path .= '/' . $params['mark'];
-        $path .= '/' . $params['model'];
-        $path .= '/' . $params['body'];
-        $path .= '/' . $params['generation'];
-        $path .= '/' . $params['complectation'];
-        $path .= '/' . $params['color'];
+        $path .= '/' . ($params['mark'] ?? 'default');
+        $path .= '/' . ($params['model'] ?? 'default');
+        $path .= '/' . ($params['body'] ?? 'default');
+        $path .= '/' . ($params['generation'] ?? 'default');
+        $path .= '/' . ($params['complectation'] ?? 'default');
+        $path .= '/' . ($params['color'] ?? 'default');
 
         return $path;
     }
