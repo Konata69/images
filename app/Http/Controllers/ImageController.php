@@ -121,7 +121,6 @@ class ImageController extends Controller
         if (!$image->is_blocked) {
             // удалить превью изображения и переместить оригинал в папку к заблокированным изображениям
             File::move(public_path() . $image->src, public_path() . $path . '/' . basename($image->src));
-            $this->photo->tempPhotoRemove(public_path() . $path . '/temp/' . $image->filename);
 
             if ($image->thumb) {
                 $this->photo->tempPhotoRemove(public_path() . $image->thumb);
@@ -227,6 +226,17 @@ class ImageController extends Controller
      */
     public function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false)
     {
+        // получить хеш
+        $hash = hash_file($this->hash_algo, $url);
+
+        // проверить, есть ли хеш в базе
+        $image = Image::where('hash', $hash)->first();
+
+        // если нашли изображение - сразу отдать
+        if ($image) {
+            return $image;
+        }
+
         // скачать изображение по ссылке
         // создать временное изображение в файловой системе
         $tmp_path = $this->photo->tempPhotoCreate($url, $path);
@@ -238,21 +248,8 @@ class ImageController extends Controller
         $file = new UploadedFile($tmp_path, basename($tmp_path));
         $filename = $file->getFilename();
 
-        // получить хеш
-        $hash = hash_file($this->hash_algo, $tmp_path);
         // получить прецептивный хеш изображения
         $image_hash = $this->hasher->hash($tmp_path);
-
-        // проверить, есть ли хеш в базе
-        $image = Image::where('hash', $hash)->first();
-
-        // если нашли изображение - сразу отдать
-        if ($image) {
-            // записать имя временного файла
-            $image->filename = $filename;
-
-            return $image;
-        }
 
         // перед обработкой изображения проверяем на похожесть с заблокированными
         if (!$block_image) {
