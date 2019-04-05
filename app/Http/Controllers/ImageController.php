@@ -81,14 +81,14 @@ class ImageController extends Controller
                 $image = $this->handleUrlImage($url, $path);
                 // выделить отдельным списком ссылки на заблокированные изображения
                 if ($image->is_blocked) {
-                    $data['blocked_image_list'][] = $image->url;
+                    $data['blocked'][] = $image->url;
                 } else {
                     $image->src = url('/') . $image->src;
                     $image->thumb = url('/') . $image->thumb;
-                    $data['image_list'][] = $image;
+                    $data['image'][] = $image;
                 }
             } catch (Throwable $e) {
-                $data['error_list'][] = $this->errorItem($url, $e->getMessage());
+                $data['error'][] = $this->errorItem($url, $e->getMessage());
             }
         }
 
@@ -146,7 +146,7 @@ class ImageController extends Controller
             try {
                 $hash_list[] = hash_file($this->hash_algo, $url);
             } catch (Throwable $e) {
-                $data['error_list'][] = $this->errorItem($url, $e->getMessage());
+                $data['error'][] = $this->errorItem($url, $e->getMessage());
             }
         }
 
@@ -193,9 +193,9 @@ class ImageController extends Controller
 
         // данные об изображениях
         $data = [];
-        $data['image_list'] = $image_list;
+        $data['image'] = $image_list;
         if ($not_found_hash_list) {
-            $data['not_found_hash_list'] = $not_found_hash_list;
+            $data['not_found'] = $not_found_hash_list;
         }
 
         return $data;
