@@ -2,20 +2,28 @@
 
 namespace App\Services;
 
-use App\Models\Image;
 use ElForastero\Transliterate\Transliterator;
 use Illuminate\Support\Str;
 use Jenssegers\ImageHash\Hash;
 use Jenssegers\ImageHash\ImageHash;
 
+/**
+ * Вспомогательные методы работы с изображениями
+ *
+ * @package App\Services
+ */
 class ImageService
 {
     /**
+     * Транслитератор
+     *
      * @var Transliterator $transliterator
      */
     protected $transliterator;
 
     /**
+     * Расчет прецептивного хеша изображения
+     *
      * @var ImageHash $hasher
      */
     protected $hasher;

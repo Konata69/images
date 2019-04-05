@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Class Image
+ * Изображение
  *
  * @package App\Models
  */
@@ -13,6 +13,11 @@ class Image extends Model
 {
     public $timestamps = false;
 
+    /**
+     * Имя временного файла
+     *
+     * @var string $filename
+     */
     public $filename;
 
     protected $fillable = ['url', 'hash', 'src', 'thumb', 'is_blocked', 'image_hash'];

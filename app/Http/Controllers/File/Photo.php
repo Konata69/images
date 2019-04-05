@@ -7,6 +7,11 @@ use App\Http\Controllers\Controller;
 use Exception;
 use Intervention\Image\Image;
 
+/**
+ * Работа с файлами изображений
+ *
+ * @package App\Http\Controllers\File
+ */
 class Photo extends Controller
 {
     use File\Traits\Processing;

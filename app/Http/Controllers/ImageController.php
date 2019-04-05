@@ -14,7 +14,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Jenssegers\ImageHash\Hash;
 use Jenssegers\ImageHash\ImageHash;
 use Jenssegers\ImageHash\Implementations\DifferenceHash;
 use Throwable;
@@ -23,15 +22,32 @@ class ImageController extends Controller
 {
     use Processing;
 
-    /** @var ImageHash $hasher */
+    /**
+     * Расчет прецептивного хеша
+     *
+     * @var ImageHash $hasher
+     */
     public $hasher;
 
-    /** @var ImageService $image_service */
+    /**
+     * Вспомогательные методы для работы с изображениями
+     *
+     * @var ImageService $image_service
+     */
     public $image_service;
 
-    /** @var Photo $photo */
+    /**
+     * Работа с файлами изображений
+     *
+     * @var Photo $photo
+     */
     public $photo;
 
+    /**
+     * Алгоритм хеширования изображений
+     *
+     * @var string $hash_algo
+     */
     public $hash_algo = 'sha256';
 
     public function __construct(Photo $photo, ImageService $image_service)
