@@ -262,16 +262,29 @@ class ImageController extends Controller
 
         // добавить превью, если необходимо
         if ($create_thumb) {
-            $thumb_path = $path . '/thumb/' . $filename;
-            $thumb_path_dir = public_path() . $path . '/thumb/';
-            if (!file_exists($thumb_path_dir)) {
-                mkdir($thumb_path_dir, 0777, true);
-            }
-            $this->photo->saveThumb($file, public_path() . $thumb_path);
-            $image->thumb = $thumb_path;
-            $image->save();
+            $this->createThumb($path, $filename, $image, $file);
         }
 
         return $image;
+    }
+
+    /**
+     * Создать превью изображения: файл превью и путь до него в модель изображения
+     *
+     * @param string $path
+     * @param string $filename
+     * @param Image $image
+     * @param \Intervention\Image\Facades\Image $file
+     */
+    public function createThumb(string $path, string $filename, Image $image, $file)
+    {
+        $thumb_path = $path . '/thumb/' . $filename;
+        $thumb_path_dir = public_path() . $path . '/thumb/';
+        if (!file_exists($thumb_path_dir)) {
+            mkdir($thumb_path_dir, 0777, true);
+        }
+        $this->photo->saveThumb($file, public_path() . $thumb_path);
+        $image->thumb = $thumb_path;
+        $image->save();
     }
 }
