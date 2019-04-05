@@ -88,9 +88,7 @@ class ImageController extends Controller
                     $data['image_list'][] = $image;
                 }
             } catch (Throwable $e) {
-                $error['url'] = $url;
-                $error['message'] = $e->getMessage();
-                $data['error_list'][] = $error;
+                $data['error_list'][] = $this->errorItem($url, $e->getMessage());
             }
         }
 
@@ -148,9 +146,7 @@ class ImageController extends Controller
             try {
                 $hash_list[] = hash_file($this->hash_algo, $url);
             } catch (Throwable $e) {
-                $error['url'] = $url;
-                $error['message'] = $e->getMessage();
-                $data['error_list'][] = $error;
+                $data['error_list'][] = $this->errorItem($url, $e->getMessage());
             }
         }
 
@@ -283,6 +279,23 @@ class ImageController extends Controller
 
         return $image;
     }
+
+    /**
+     * Получить отдельную запись ошибки
+     *
+     * @param string $url ссылка на исходное изображение
+     * @param string $msg текст ошибки
+     *
+     * @return array
+     */
+    protected function errorItem(string $url, string $msg): array
+    {
+        return [
+            'url' => $url,
+            'message' => $msg
+        ];
+    }
+
 
     /**
      * Создать превью изображения: файл превью и путь до него в модель изображения
