@@ -6,7 +6,7 @@
     $repo = 'git@gitlab.4px.ru:4px/autoxml-img.git';
 
     if ($branch === 'master') {
-        $dir = '/var/www/mysite/www/cdn.autoxml.4px.tech';
+        $dir = '/home/admin/web/cdn.autoxml.4px.tech/public_html';
         $supervisor_group = 'autoxml:*';
     }
 
