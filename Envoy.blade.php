@@ -37,24 +37,6 @@
     composer install --prefer-dist --no-scripts -q -o
 @endtask
 
-@task('npm_install')
-    echo '**************************************'
-    echo '*             npm install            *'
-    echo '**************************************'
-
-    cd {{ $dir_active }}
-    npm install
-@endtask
-
-@task('npm_run')
-    echo '**************************************'
-    echo '*               npm run              *'
-    echo '**************************************'
-
-    cd {{ $dir_active }}
-    npm run production
-@endtask
-
 @task ('env_symlink')
     echo '**************************************'
     echo '*         enviroment symlink         *'
@@ -128,8 +110,6 @@
 @macro('deploy')
     clone
     composer
-    npm_install
-    npm_run
     env_symlink
     migrate
     config_cache
