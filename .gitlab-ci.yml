@@ -1,6 +1,6 @@
 deploy master:
   script:
-  - /var/www/mysite/composer/vendor/bin/envoy run deploy --branch=$CI_COMMIT_REF_NAME --commit=$CI_COMMIT_SHA 
+  - /home/admin/.config/composer/vendor/bin/envoy run deploy --branch=$CI_COMMIT_REF_NAME --commit=$CI_COMMIT_SHA
   environment:
     name: production
     url: https://cdn.autoxml.4px.tech
