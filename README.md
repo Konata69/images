@@ -19,8 +19,11 @@ basic http authentication (base64(username:password))
 - admin@test.loc
 - password
 
-ссылка на Postman коллекцию:
+ссылка на Postman коллекцию для локальной отладки(127.0.0.1:8000):
 https://www.getpostman.com/collections/b416f25feef63ee3a900
+
+ссылка на Postman коллекцию для отладки прода (https://cdn.autoxml.4px.tech):
+https://www.getpostman.com/collections/882afd85704b59a2e940
 
 ## Api
 POST api/image/block - блокировать изображение по ссылке
