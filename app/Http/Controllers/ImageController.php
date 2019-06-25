@@ -151,10 +151,14 @@ class ImageController extends Controller
         // получить список хешей
         $hash_list = [];
         $data = [];
+        // список соответствия хешей урлам $hash => $url
+        $hash_url = [];
 
         foreach ($url_list as $url) {
             try {
-                $hash_list[] = hash_file($this->hash_algo, $url);
+                $hash = hash_file($this->hash_algo, $url);
+                $hash_list[] = $hash;
+                $hash_url[$hash] = $url;
             } catch (Throwable $e) {
                 $data['error'][] = $this->errorItem($url, $e->getMessage());
             }
@@ -162,7 +166,33 @@ class ImageController extends Controller
 
         $data = array_merge($this->findImageByHashList($hash_list), $data);
 
+        if (!empty($data['not_found'])) {
+            $data['not_found'] = $this->addUrlToHash($data['not_found'], $hash_url);
+        }
+
         return response()->json($data);
+    }
+
+    /**
+     * Обьединить урлы и хеши в один список
+     *
+     * @param array $hash_list
+     * @param array $hash_url
+     *
+     * @return array
+     */
+    protected function addUrlToHash(array $hash_list, array $hash_url): array
+    {
+        $hash_url_list = [];
+        foreach ($hash_list as $hash) {
+            if (!empty($hash_url[$hash])) {
+                $hash_url_list[] = [
+                    'url' => $hash_url[$hash],
+                    'hash' => $hash,
+                ];
+            }
+        }
+        return $hash_url_list;
     }
 
     /**
