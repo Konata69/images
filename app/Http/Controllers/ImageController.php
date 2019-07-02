@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\File\Photo;
 use App\Http\Controllers\File\Traits\Processing;
 use App\Http\Requests\BlockImage;
+use App\Http\Requests\ImageAutoLoad;
 use App\Http\Requests\ImageLoad;
 use App\Models\Image;
+use App\Models\ImageAuto;
 use App\Services\ImageService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -98,6 +100,58 @@ class ImageController extends Controller
         }
 
         return response()->json($data);
+    }
+
+    /**
+     * Загрузить изображение индивидуального авто по ссылке или набору ссылок
+     *
+     * @param ImageAutoLoad $request
+     *
+     * @return JsonResponse
+     */
+    public function loadAutoAction(ImageAutoLoad $request)
+    {
+        // из переданных параметров авто собрать путь сохранения файла
+        // общий для всех изображений
+
+        $path = $this->makeAutoImagePath($request->card_id, $request->auto_id);
+
+        $url_list = (array) $request->url;
+
+        // ответ с результатами обработки ссылок на изображения
+        $data = [];
+
+        // обработать список ссылок, пройтись по ссылкам и достать изображение
+        foreach ($url_list as $url) {
+            try {
+                $image = $this->handleUrlImage($url, $path, true, false, ImageAuto::class);
+                // выделить отдельным списком ссылки на заблокированные изображения
+                if ($image->is_blocked) {
+                    $data['blocked'][] = $image->url;
+                } else {
+                    $image->src = url('/') . $image->src;
+                    $image->thumb = url('/') . $image->thumb;
+                    $data['image'][] = $image;
+                }
+            } catch (Throwable $e) {
+                $data['error'][] = $this->errorItem($url, $e->getMessage());
+            }
+        }
+
+        return response()->json($data);
+    }
+
+    /**
+     * Сделать относительный путь для индивидуального изображения авто
+     *
+     * @param $card_id
+     * @param $auto_id
+     *
+     * @return string
+     */
+    protected function makeAutoImagePath($card_id, $auto_id): string
+    {
+        return "/image/auto/{$card_id}/{$auto_id}";
     }
 
     /**
@@ -249,18 +303,20 @@ class ImageController extends Controller
      * @param string $path
      * @param bool $create_thumb
      * @param bool $block_image блокировать ли изображение при обработке
+     * @param string $image_class_name - название класса модели изображения
      *
      * @return Image|Builder|Model|object|null
      *
      * @throws \HttpException
      */
-    public function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false)
+    public function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false, $image_class_name = Image::class)
     {
         // получить хеш
         $hash = hash_file($this->hash_algo, $url);
 
         // проверить, есть ли хеш в базе
-        $image = Image::where('hash', $hash)->first();
+        //TODO Заменить $image_class_name полиморфизмом
+        $image = $image_class_name::where('hash', $hash)->first();
 
         // если нашли изображение - сразу отдать
         if ($image) {
@@ -301,7 +357,7 @@ class ImageController extends Controller
         $this->photo->tempPhotoRemove($tmp_path);
 
         // записать в базу данные изображения
-        $image = Image::create([
+        $image = $image_class_name::create([
             'hash' => $hash,
             'image_hash' => $image_hash->toHex(),
             'url' => $url,
