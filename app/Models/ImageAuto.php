@@ -10,6 +10,8 @@ class ImageAuto extends Model
 
     protected $fillable = ['url', 'hash', 'src', 'thumb', 'is_blocked', 'image_hash'];
 
+    protected $table = 'image_auto';
+
     /**
      * Получить список прецептивных хешей заблокированных изображений
      *

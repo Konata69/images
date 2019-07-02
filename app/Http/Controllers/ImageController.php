@@ -395,10 +395,11 @@ class ImageController extends Controller
      *
      * @param string $path
      * @param string $filename
-     * @param Image $image
+     * @param Image|ImageAuto $image
      * @param \Intervention\Image\Facades\Image $file
      */
-    public function createThumb(string $path, string $filename, Image $image, $file)
+    //TODO Вернуть тип для параметра $image
+    public function createThumb(string $path, string $filename, $image, $file)
     {
         $thumb_path = $path . '/thumb/' . $filename;
         $thumb_path_dir = public_path() . $path . '/thumb/';
