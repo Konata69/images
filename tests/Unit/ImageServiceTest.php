@@ -2,7 +2,6 @@
 
 namespace Tests\Unit;
 
-use App\Models\Image;
 use App\Services\ImageService;
 use Tests\TestCase;
 

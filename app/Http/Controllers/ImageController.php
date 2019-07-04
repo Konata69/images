@@ -7,7 +7,7 @@ use App\Http\Controllers\File\Traits\Processing;
 use App\Http\Requests\BlockImage;
 use App\Http\Requests\ImageAutoLoad;
 use App\Http\Requests\ImageLoad;
-use App\Models\Image;
+use App\Models\ImagePhotobank;
 use App\Models\ImageAuto;
 use App\Services\ImageService;
 use Illuminate\Database\Eloquent\Builder;
@@ -75,7 +75,7 @@ class ImageController extends Controller
     {
         // из переданных параметров авто собрать путь сохранения файла
         // общий для всех изображений
-        $path = $this->image_service->makePath($request->only(Image::getAutoParamList()));
+        $path = $this->image_service->makePath($request->only(ImagePhotobank::getAutoParamList()));
 
         $url_list = (array) $request->url;
 
@@ -274,11 +274,11 @@ class ImageController extends Controller
      */
     public function findImageByHashList(array $hash_list): array
     {
-        $image_list = Image::whereIn('hash', $hash_list)->get();
+        $image_list = ImagePhotobank::whereIn('hash', $hash_list)->get();
         $not_found_hash_list = array_diff($hash_list, $image_list->pluck('hash')->toArray());
 
         // дополнить ссылки на изображения и превью (если есть)
-        $image_list->map(function (Image $image) {
+        $image_list->map(function (ImagePhotobank $image) {
             $image->src = url('/') . $image->src;
             $image->thumb = !empty($image->thumb) ? url('/') . $image->thumb : $image->thumb;
 
@@ -305,11 +305,11 @@ class ImageController extends Controller
      * @param bool $block_image блокировать ли изображение при обработке
      * @param string $image_class_name - название класса модели изображения
      *
-     * @return Image|Builder|Model|object|null
+     * @return ImagePhotobank|Builder|Model|object|null
      *
      * @throws \HttpException
      */
-    public function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false, $image_class_name = Image::class)
+    public function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false, $image_class_name = ImagePhotobank::class)
     {
         // получить хеш
         $hash = hash_file($this->hash_algo, $url);
@@ -339,11 +339,11 @@ class ImageController extends Controller
 
         // перед обработкой изображения проверяем на похожесть с заблокированными
         if (!$block_image) {
-            $blocked_image = $this->image_service->searchBlocked($image_hash->toHex(), Image::getBlockedImageHashList());
+            $blocked_image = $this->image_service->searchBlocked($image_hash->toHex(), ImagePhotobank::getBlockedImageHashList());
 
             // в случае похожести отдать инфу о том, что изображение заблокировано
             if ($blocked_image) {
-                $image = new Image(['url' => $url, 'is_blocked' => true]);
+                $image = new ImagePhotobank(['url' => $url, 'is_blocked' => true]);
 
                 return $image;
             }
@@ -395,7 +395,7 @@ class ImageController extends Controller
      *
      * @param string $path
      * @param string $filename
-     * @param Image|ImageAuto $image
+     * @param ImagePhotobank|ImageAuto $image
      * @param \Intervention\Image\Facades\Image $file
      */
     //TODO Вернуть тип для параметра $image

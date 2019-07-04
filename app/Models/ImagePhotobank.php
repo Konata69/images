@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class Image extends Model
+class ImagePhotobank extends Model
 {
     public $timestamps = false;
 
