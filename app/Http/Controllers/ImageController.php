@@ -80,24 +80,7 @@ class ImageController extends Controller
         $url_list = (array) $request->url;
 
         // ответ с результатами обработки ссылок на изображения
-        $data = [];
-
-        // обработать список ссылок, пройтись по ссылкам и достать изображение
-        foreach ($url_list as $url) {
-            try {
-                $image = $this->handleUrlImage($url, $path);
-                // выделить отдельным списком ссылки на заблокированные изображения
-                if ($image->is_blocked) {
-                    $data['blocked'][] = $image->url;
-                } else {
-                    $image->src = url('/') . $image->src;
-                    $image->thumb = url('/') . $image->thumb;
-                    $data['image'][] = $image;
-                }
-            } catch (Throwable $e) {
-                $data['error'][] = $this->errorItem($url, $e->getMessage());
-            }
-        }
+        $data = $this->load($url_list, $path, true, false, ImagePhotobank::class);
 
         return response()->json($data);
     }
@@ -113,18 +96,36 @@ class ImageController extends Controller
     {
         // из переданных параметров авто собрать путь сохранения файла
         // общий для всех изображений
-
         $path = $this->makeAutoImagePath($request->card_id, $request->auto_id);
 
         $url_list = (array) $request->url;
 
+        // ответ с результатами обработки ссылок на изображения
+        $data = $this->load($url_list, $path, true, false, ImageAuto::class);
+
+        return response()->json($data);
+    }
+
+    /**
+     * Загрузка изображений по списку ссылок
+     *
+     * @param array $url_list
+     * @param string $path
+     * @param bool $create_thumb
+     * @param bool $block_image
+     * @param string $image_class_name
+     *
+     * @return array
+     */
+    protected function load(array $url_list, string $path, bool $create_thumb, bool $block_image, string $image_class_name)
+    {
         // ответ с результатами обработки ссылок на изображения
         $data = [];
 
         // обработать список ссылок, пройтись по ссылкам и достать изображение
         foreach ($url_list as $url) {
             try {
-                $image = $this->handleUrlImage($url, $path, true, false, ImageAuto::class);
+                $image = $this->handleUrlImage($url, $path, $create_thumb, $block_image, $image_class_name);
                 // выделить отдельным списком ссылки на заблокированные изображения
                 if ($image->is_blocked) {
                     $data['blocked'][] = $image->url;
@@ -138,7 +139,7 @@ class ImageController extends Controller
             }
         }
 
-        return response()->json($data);
+        return $data;
     }
 
     /**
