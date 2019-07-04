@@ -18,22 +18,29 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::group(['middleware' => 'auth.basic'], function () {
-    Route::prefix('/image')->group(function () {
+    Route::prefix('/image')->namespace('Image')->group(function () {
+        //работа с изображениями из фотобанка
         Route::prefix('/photobank')->group(function () {
-            // загрузить изображение в фотобанк по ссылке в сервис
-            Route::post('/load', 'ImageController@loadAction')->name('image-load-action');
+            // загрузить изображение по ссылке в сервис
+            Route::post('/load', 'PhotobankController@loadAction')->name('image-load-action');
             // заблокировать изображение по ссылке
-            Route::post('/block', 'ImageController@blockAction')->name('image-block-action');
+            Route::post('/block', 'PhotobankController@blockAction')->name('image-block-action');
             // получить список изображений по урлу (списку урлов)
-            Route::post('/by-url', 'ImageController@byUrlView')->name('image-by-url-view');
+            Route::post('/by-url', 'PhotobankController@byUrlView')->name('image-by-url-view');
             // получить список изображений по хешу (списку хешей)
-            Route::post('/by-hash', 'ImageController@byHashView')->name('image-by-hash-view');
+            Route::post('/by-hash', 'PhotobankController@byHashView')->name('image-by-hash-view');
         });
 
         //работа с индивидуальными изображениями авто
         Route::prefix('/auto')->group(function () {
-            // загрузить индивидуальное изображение автомобиля в сервис
-            Route::post('/load', 'ImageController@loadAutoAction')->name('image-auto-load-action');
+            // загрузить изображение в сервис
+            Route::post('/load', 'AutoController@loadAutoAction')->name('image-auto-load-action');
+            // заблокировать изображение по ссылке
+            Route::post('/block', 'AutoController@blockAction')->name('image-block-action');
+            // получить список изображений по урлу (списку урлов)
+            Route::post('/by-url', 'AutoController@byUrlView')->name('image-by-url-view');
+            // получить список изображений по хешу (списку хешей)
+            Route::post('/by-hash', 'AutoController@byHashView')->name('image-by-hash-view');
         });
     });
 });

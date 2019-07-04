@@ -56,6 +56,8 @@ class BaseController extends Controller
      * @param BlockImage $request
      *
      * @return JsonResponse
+     *
+     * @throws \HttpException
      */
     public function blockAction(BlockImage $request)
     {
