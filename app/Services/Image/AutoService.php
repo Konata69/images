@@ -3,14 +3,20 @@
 namespace App\Services\Image;
 
 use App\Http\Controllers\File\Photo;
+use App\Models\ImageAuto;
 use Jenssegers\ImageHash\ImageHash;
 
 class AutoService extends BaseService
 {
+    /**
+     * @var ImageAuto
+     */
+    protected $model;
 
     public function __construct(Photo $photo, ImageHash $hasher)
     {
         parent::__construct($photo, $hasher);
+        $this->model = new ImageAuto();
     }
 
     /**

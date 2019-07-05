@@ -34,7 +34,7 @@ Route::group(['middleware' => 'auth.basic'], function () {
         //работа с индивидуальными изображениями авто
         Route::prefix('/auto')->group(function () {
             // загрузить изображение в сервис
-            Route::post('/load', 'AutoController@loadAutoAction')->name('image-auto-load-action');
+            Route::post('/load', 'AutoController@loadAction')->name('image-auto-load-action');
             // заблокировать изображение по ссылке
             Route::post('/block', 'AutoController@blockAction')->name('image-block-action');
             // получить список изображений по урлу (списку урлов)
