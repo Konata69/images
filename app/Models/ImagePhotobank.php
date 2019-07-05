@@ -14,4 +14,6 @@ class ImagePhotobank extends Model
     public $timestamps = false;
 
     protected $fillable = ['url', 'hash', 'src', 'thumb', 'is_blocked', 'image_hash'];
+
+    protected $table = 'images';
 }

@@ -2,8 +2,17 @@
 
 namespace App\Services\Image;
 
+use App\Http\Controllers\File\Photo;
+use Jenssegers\ImageHash\ImageHash;
+
 class AutoService extends BaseService
 {
+
+    public function __construct(Photo $photo, ImageHash $hasher)
+    {
+        parent::__construct($photo, $hasher);
+    }
+
     /**
      * Получить список параметров авто
      *

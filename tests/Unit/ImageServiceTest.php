@@ -7,6 +7,8 @@ use Tests\TestCase;
 
 class ImageServiceTest extends TestCase
 {
+    //TODO Поправить тесты после рефакторинга
+
     /**
      * @var ImageService $image_service
      */

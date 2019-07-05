@@ -2,14 +2,11 @@
 
 namespace App\Services\Image;
 
-use App\Models\ImageAuto;
+use App\Http\Controllers\File\Photo;
 use App\Models\ImagePhotobank;
 use ElForastero\Transliterate\Transliterator;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
-use Throwable;
+use Illuminate\Support\Str;
+use Jenssegers\ImageHash\ImageHash;
 
 /**
  * Сервис для работы с изображениями из фотобанка
@@ -28,9 +25,9 @@ class PhotobankService extends BaseService
      */
     protected $transliterator;
 
-    public function __construct(Transliterator $transliterator)
+    public function __construct(Photo $photo, ImageHash $hasher, Transliterator $transliterator)
     {
-        parent::__construct();
+        parent::__construct($photo, $hasher);
         $this->model = new ImagePhotobank();
         $this->transliterator = $transliterator;
     }

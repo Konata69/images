@@ -175,6 +175,8 @@ return [
 
         //Работа с изображениями
         Intervention\Image\ImageServiceProvider::class,
+        //Хеширование изображений
+        App\Providers\ImageHashServiceProvider::class,
 
         //Транслитерация
         ElForastero\Transliterate\ServiceProvider::class,
