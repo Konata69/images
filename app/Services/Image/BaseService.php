@@ -95,6 +95,55 @@ abstract class BaseService
     }
 
     /**
+     * Загрузка изображения напрямую
+     *
+     * @param UploadedFile $file
+     * @param string $path
+     *
+     * @return Model
+     */
+    public function upload(UploadedFile $file, string $path)
+    {
+        $pathname_tmp = $file->getPathname();
+        $filename = $file->getClientOriginalName();
+        $directory = public_path() . $path . '/';
+
+        $image = $this->model->newQuery()->where([
+            'url' => url('/') . $path . '/' . $filename,
+        ])->first();
+
+        if (!empty($image)) {
+            return $image;
+        }
+
+        $hash = hash_file($this->hash_algo, $pathname_tmp);
+        // получить прецептивный хеш изображения
+        $image_hash = $this->hasher->hash($pathname_tmp);
+
+        if (!file_exists($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        // обрезать и сжать изображение
+        $file = $this->prepareFile($file);
+        // переместить файл изображения из временной папки в обычную
+        $this->photo->savePhoto($file, $directory . $filename);
+
+        // записать в базу данные изображения
+        $image = $this->model::create([
+            'hash' => $hash,
+            'image_hash' => $image_hash->toHex(),
+            'url' => url('/') . $path . '/' . $filename,
+            'is_blocked' => false,
+            'src' => $path . '/' . $filename,
+        ]);
+
+        $this->createThumb($path, $filename, $image, $file);
+
+        return $image;
+    }
+
+    /**
      * Блокировать изображение по ссылке
      *
      * @param string $url

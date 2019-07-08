@@ -51,6 +51,25 @@ class BaseController extends Controller
     }
 
     /**
+     * Экшен загрузки изображения напрямую
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function uploadAction(Request $request)
+    {
+        $file = $request->file('image');
+
+        $path_params = $this->image_service->getAutoParamList();
+        $path = $this->image_service->makePath($request->only($path_params));
+
+        $data = $this->image_service->upload($file, $path);
+
+        return response()->json($data);
+    }
+
+    /**
      * Экшен пометки изображения заблокированным по ссылке
      *
      * @param BlockImage $request
