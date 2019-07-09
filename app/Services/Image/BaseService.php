@@ -144,6 +144,26 @@ abstract class BaseService
     }
 
     /**
+     * Удалить изображение по внутренней ссылке (src)
+     *
+     * @param string $src
+     *
+     * @return bool
+     */
+    public function delete(string $src): bool
+    {
+        $parsed = parse_url($src);
+        $src = $parsed['path'];
+        $result = false;
+
+        if (!empty($src)) {
+            $result = (bool) $this->model->newQuery()->where('src', $src)->delete();
+        }
+
+        return $result;
+    }
+
+    /**
      * Блокировать изображение по ссылке
      *
      * @param string $url

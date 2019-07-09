@@ -70,6 +70,20 @@ class BaseController extends Controller
     }
 
     /**
+     * Экшен удаления изображения по внутренней ссылке
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function deleteAction(Request $request)
+    {
+        $data['is_deleted'] = $this->image_service->delete($request->src);
+
+        return response()->json($data);
+    }
+
+    /**
      * Экшен пометки изображения заблокированным по ссылке
      *
      * @param BlockImage $request

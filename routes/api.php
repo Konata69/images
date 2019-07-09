@@ -27,6 +27,8 @@ Route::group(['middleware' => 'auth.basic'], function () {
             Route::post('/load', 'PhotobankController@loadAction')->name($route . '-load-action');
             // прямая загрузка файла
             Route::post('/upload', 'PhotobankController@uploadAction')->name($route . '-upload-action');
+            // удаление файла
+            Route::post('/delete', 'PhotobankController@deleteAction')->name($route . '-delete-action');
             // заблокировать изображение по ссылке
             Route::post('/block', 'PhotobankController@blockAction')->name($route . '-block-action');
             // получить список изображений по урлу (списку урлов)
@@ -43,6 +45,8 @@ Route::group(['middleware' => 'auth.basic'], function () {
             Route::post('/load', 'AutoController@loadAction')->name($route . '-load-action');
             // прямая загрузка файла
             Route::post('/upload', 'AutoController@uploadAction')->name($route . '-upload-action');
+            // удаление файла
+            Route::post('/delete', 'AutoController@deleteAction')->name($route . '-delete-action');
             // заблокировать изображение по ссылке
             Route::post('/block', 'AutoController@blockAction')->name($route . '-block-action');
             // получить список изображений по урлу (списку урлов)
