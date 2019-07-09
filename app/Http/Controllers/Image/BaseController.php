@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BlockImage;
 use App\Http\Requests\ImageLoad;
 use App\Services\Image\BaseService;
+use Exception;
+use HttpException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -75,10 +77,12 @@ class BaseController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     *
+     * @throws Exception
      */
-    public function deleteAction(Request $request)
+    public function removeAction(Request $request)
     {
-        $data['is_deleted'] = $this->image_service->delete($request->src);
+        $data['is_deleted'] = $this->image_service->remove($request->src);
 
         return response()->json($data);
     }
@@ -90,7 +94,7 @@ class BaseController extends Controller
      *
      * @return JsonResponse
      *
-     * @throws \HttpException
+     * @throws HttpException
      */
     public function blockAction(BlockImage $request)
     {

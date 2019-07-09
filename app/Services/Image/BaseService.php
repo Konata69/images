@@ -6,6 +6,7 @@ use App\Http\Controllers\File\Photo;
 use App\Http\Controllers\File\Traits\Processing;
 use App\Models\ImageAuto;
 use App\Models\ImagePhotobank;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -149,15 +150,23 @@ abstract class BaseService
      * @param string $src
      *
      * @return bool
+     *
+     * @throws Exception
      */
-    public function delete(string $src): bool
+    public function remove(string $src): bool
     {
         $parsed = parse_url($src);
         $src = $parsed['path'];
         $result = false;
 
         if (!empty($src)) {
-            $result = (bool) $this->model->newQuery()->where('src', $src)->delete();
+            $image = $this->model->newQuery()->where('src', $src)->first();
+
+            if (!empty($image)) {
+                $this->removeFile($src, $image->thumb);
+
+                $result = (bool) $image->delete();
+            }
         }
 
         return $result;
@@ -435,5 +444,24 @@ abstract class BaseService
         $this->photo->saveThumb($file, public_path() . $thumb_path);
         $image->thumb = $thumb_path;
         $image->save();
+    }
+
+    /**
+     * Удаляем файлы изображения и превью
+     *
+     * @param string $src путь к файлу изображения
+     * @param string $thumb путь к файлу превью
+     */
+    protected function removeFile($src, $thumb)
+    {
+        $dir = public_path();
+
+        if (file_exists($dir . $src)) {
+            unlink($dir . $src);
+        }
+
+        if (file_exists($dir . $thumb)) {
+            unlink($dir . $thumb);
+        }
     }
 }
