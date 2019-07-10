@@ -149,23 +149,30 @@ abstract class BaseService
      *
      * @param string $src
      *
-     * @return bool
+     * @return array - статус удаления
      *
      * @throws Exception
      */
-    public function remove(string $src): bool
+    public function remove(string $src): array
     {
         $parsed = parse_url($src);
         $src = $parsed['path'];
-        $result = false;
+        $result = [
+            'row_found' => false,
+            'image_deleted' => false,
+            'thumb_deleted' => false,
+            'row_deleted' => false,
+        ];
 
         if (!empty($src)) {
             $image = $this->model->newQuery()->where('src', $src)->first();
 
             if (!empty($image)) {
-                $this->removeFile($src, $image->thumb);
+                $result['row_found'] = true;
+                $result['image_deleted'] = $this->removeFile($src);
+                $result['thumb_deleted'] = $this->removeFile($image->thumb);
 
-                $result = (bool) $image->delete();
+                $result['row_deleted'] = (bool) $image->delete();
             }
         }
 
@@ -447,21 +454,22 @@ abstract class BaseService
     }
 
     /**
-     * Удаляем файлы изображения и превью
+     * Удаляем файл изображения
      *
-     * @param string $src путь к файлу изображения
-     * @param string $thumb путь к файлу превью
+     * @param string $pathname путь к файлу изображения
+     *
+     * @return bool
      */
-    protected function removeFile($src, $thumb)
+    protected function removeFile(string $pathname): bool
     {
         $dir = public_path();
 
-        if (file_exists($dir . $src)) {
-            unlink($dir . $src);
+        $result = false;
+
+        if (file_exists($dir . $pathname)) {
+            $result = unlink($dir . $pathname);
         }
 
-        if (file_exists($dir . $thumb)) {
-            unlink($dir . $thumb);
-        }
+        return $result;
     }
 }

@@ -82,7 +82,7 @@ class BaseController extends Controller
      */
     public function removeAction(Request $request)
     {
-        $data['is_deleted'] = $this->image_service->remove($request->src);
+        $data = $this->image_service->remove($request->src);
 
         return response()->json($data);
     }
