@@ -168,11 +168,17 @@ abstract class BaseService
             $image = $this->model->newQuery()->where('src', $src)->first();
 
             if (!empty($image)) {
+                // нашли изображение - удаляем файлы и запись в бд
                 $result['row_found'] = true;
                 $result['image_deleted'] = $this->removeFile($src);
                 $result['thumb_deleted'] = $this->removeFile($image->thumb);
 
                 $result['row_deleted'] = (bool) $image->delete();
+            } else {
+                // не нашли - считаем, что файлов нет, помечаем как удаленные
+                $result['image_deleted'] = true;
+                $result['thumb_deleted'] = true;
+                $result['row_deleted'] = true;
             }
         }
 
