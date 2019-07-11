@@ -66,9 +66,12 @@ class BaseController extends Controller
         $path_params = $this->image_service->getAutoParamList();
         $path = $this->image_service->makePath($request->only($path_params));
 
-        $data = $this->image_service->upload($file, $path);
+        $image = $this->image_service->upload($file, $path);
 
-        return response()->json($data);
+        $image->src = url('/') . $image->src;
+        $image->thumb = url('/') . $image->thumb;
+
+        return response()->json($image);
     }
 
     /**
