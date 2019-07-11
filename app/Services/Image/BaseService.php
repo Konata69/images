@@ -73,7 +73,11 @@ abstract class BaseService
     public function load(array $url_list, string $path, bool $create_thumb, bool $block_image)
     {
         // ответ с результатами обработки ссылок на изображения
-        $data = [];
+        $data = [
+            'image' => [],
+            'blocked' => [],
+            'error' => [],
+        ];
 
         // обработать список ссылок, пройтись по ссылкам и достать изображение
         foreach ($url_list as $url) {
