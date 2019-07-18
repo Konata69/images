@@ -70,8 +70,12 @@
     echo '**************************************'
 
     echo "linking image directory"
-    rm -rf {{ $dir_active }}/public/file
+    rm -rf {{ $dir_active }}/public/image
     ln -nfs {{ $dir }}/public/image {{ $dir_active }}/public/image
+
+    echo "linking image_blocked directory"
+    rm -rf {{ $dir_active }}/public/image_blocked
+    ln -nfs {{ $dir }}/public/image_blocked {{ $dir_active }}/public/image_blocked
 
     echo 'linking current release'
     ln -nfs {{ $dir_active }} {{ $dir_current }}
