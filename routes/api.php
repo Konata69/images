@@ -13,11 +13,16 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+//TODO Убрать тестовый роут
+Route::post('/queue/image/test', 'Image\QueueController@test')->name('queue-image-test');
 
 Route::group(['middleware' => 'auth.basic'], function () {
+    // работа через очередь
+    Route::prefix('/queue')->group( function () {
+        // добавить в очередь загрузку изображения
+        Route::post('/image/load', 'Image\QueueController@load')->name('queue-image-load');
+    });
+
     Route::prefix('/image')->namespace('Image')->group(function () {
         //работа с изображениями из фотобанка
         Route::prefix('/photobank')->group(function () {
