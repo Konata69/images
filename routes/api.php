@@ -14,16 +14,16 @@ use Illuminate\Http\Request;
 */
 
 //TODO Убрать тестовый роут
-Route::post('/queue/image/test', 'Image\QueueController@test')->name('queue-image-test');
+Route::post('/image/queue/test', 'Image\QueueController@test')->name('image-queue-test');
 
 Route::group(['middleware' => 'auth.basic'], function () {
-    // работа через очередь
-    Route::prefix('/queue')->group( function () {
-        // добавить в очередь загрузку изображения
-        Route::post('/image/load', 'Image\QueueController@load')->name('queue-image-load');
-    });
-
     Route::prefix('/image')->namespace('Image')->group(function () {
+        // работа через очередь
+        Route::prefix('/queue')->group( function () {
+            // добавить в очередь загрузку изображения
+            Route::post('/load', 'QueueController@load')->name('image-queue-load');
+        });
+
         //работа с изображениями из фотобанка
         Route::prefix('/photobank')->group(function () {
             $route = 'image-photobank';
