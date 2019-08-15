@@ -36,19 +36,25 @@ abstract class BaseService
     protected $hash_algo = 'sha256';
 
     /**
-     * @var Photo работа с файлами изображений
+     * @var Photo работа с файлами изображений (старый код)
      */
     protected $photo;
+
+    /**
+     * @var FileService работа с файлами изображений (новый сервис)
+     */
+    protected $file_service;
 
     /**
      * @var ImageHash $hasher Расчет прецептивного хеша изображения
      */
     protected $hasher;
 
-    public function __construct(Photo $photo, ImageHash $hasher)
+    public function __construct(Photo $photo, ImageHash $hasher, FileService $file_service)
     {
         $this->photo = $photo;
         $this->hasher = $hasher;
+        $this->file_service = $file_service;
     }
 
     abstract public function makePath(array $path_params): string;
@@ -449,6 +455,7 @@ abstract class BaseService
      * @param ImagePhotobank|ImageAuto $image
      * @param Image $file
      */
+    //TODO Выделить работу с файлом и вынести в файл сервис
     protected function createThumb(string $path, string $filename, $image, $file)
     {
         $thumb_path = $path . '/thumb/' . $filename;
@@ -470,6 +477,7 @@ abstract class BaseService
      *
      * @return bool
      */
+    //TODO Вынести в файл сервис
     protected function removeFile(string $pathname): bool
     {
         $dir = public_path();

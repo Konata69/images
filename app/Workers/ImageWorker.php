@@ -7,7 +7,6 @@ use App\Models\ImagePhotobank;
 use App\Services\BaseApiClient;
 use App\Services\Image\AutoService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\File;
 
 /**
  * Обработчик задач по загрузке изображений
@@ -34,11 +33,58 @@ class ImageWorker
      * Запрашивает файл изображения, сохраняет, отсылает ссылки на изображения
      *
      * @param int $image_id
-     * @param array $path_data
      *
      * @return JsonResponse
      */
-    public function load(int $image_id, array $path_data)
+    public function load(int $image_id)
+    {
+        // получить изображение и информацию о нем из api
+        $result = $this->getImageFromApi($image_id);
+
+        // проверить на ошибки в ответе
+        if (!$this->hasErrors($result)) {
+            // сохранить файл и модель изображения
+            $image = $this->save($result['data']['image']);
+        } else {
+            //TODO обработать ошибки
+            // завершить таску, если невозможно получить изображение
+            // повторить таску, если возможно получить изображение
+            // для повтора таски бросить исключение
+            return;
+        }
+
+        // второй запрос - отдать сервисные ссылки на изображение
+        $result = $this->sendServiceUrl($image);
+        if ($this->hasErrors($result)) {
+            // бросить исключение
+        }
+
+    }
+
+    /**
+     * Проверить ответ на наличие ошибок и изображения
+     *
+     * @param array $response
+     *
+     * @return bool
+     */
+    protected function hasErrors(array $response): bool
+    {
+        $hasErrors = empty($response['data']['error'])
+            && empty($response['error'])
+            && !empty($response['data']['image']);
+
+        return $hasErrors;
+    }
+
+    /**
+     * Получить информацию об изображении из api
+     *
+     * @param int $image_id
+     *
+     * @return array
+     */
+    protected function getImageFromApi(int $image_id)
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/image';
@@ -48,20 +94,7 @@ class ImageWorker
         // первый запрос - на получение файла изображения
         $result = $this->api->post($url, $data, $header);
 
-        if (empty($result['data']['error'])
-            && empty($result['error'])
-            && !empty($result['data']['image'])) {
-
-            // сохранить файл и модель изображения
-            $image = $this->save($result['data']['image']);
-
-        } else {
-            // обработать ошибки
-        }
-
-        // второй запрос - отдать сервисные ссылки на изображение
-
-        return response()->json($data);
+        return $result;
     }
 
     /**
@@ -73,66 +106,9 @@ class ImageWorker
      */
     protected function save(array $image)
     {
+        //TODO Сделать вызов из сервиса (изображений или файлов)
         $src = $this->saveFile($image['filename'], $image['content'], $image['path_data']);
         // создать модель изображения (частный)
 
-    }
-
-    /**
-     * Сохранить файл
-     *
-     * @param string $name - название файла с расширением
-     * @param string $content - base64 строка с содержимым файла
-     * @param array $path_data - параметры для формирования пути к файлу
-     *
-     * @return string - относительный путь до файла
-     */
-    //TODO Вынести в сервис
-    protected function saveFile(string $name, string $content, array $path_data): string
-    {
-        $content = base64_decode($content);
-
-        $absolute_path_file = $this->getFileAbsolutePath($name, $path_data);
-        $relative_path_directory = $this->image_service->makePath($path_data);
-
-        if (!File::exists($relative_path_directory)) {
-            File::makeDirectory($relative_path_directory, 0777, true);
-        }
-
-        File::replace($absolute_path_file, $content);
-
-        return $relative_path_directory . '/' . $name;
-    }
-
-    /**
-     * Получить абсолютный путь к файлу
-     *
-     * @param string $filename
-     * @param array $path_data
-     *
-     * @return string
-     */
-    //TODO Вынести в сервис
-    protected function getFileAbsolutePath(string $filename, array $path_data): string
-    {
-        $relative_path_directory = $this->image_service->makePath($path_data);
-        $absolute_path_directory = public_path() . $relative_path_directory;
-        $absolute_path_file = $absolute_path_directory . '/' . $filename;
-
-        return $absolute_path_file;
-    }
-
-    /**
-     * @param array $path_data
-     *
-     * @return string
-     */
-    //TODO Вынести в сервис
-    protected function getDirectoryAbsolutePath(array $path_data): string
-    {
-        $relative_path_directory = $this->image_service->makePath($path_data);
-        $absolute_path_directory = public_path() . $relative_path_directory;
-
-        return $absolute_path_directory;
     }
 }
