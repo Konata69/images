@@ -1,15 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Image;
 
-use Illuminate\Database\Eloquent\Model;
-
-class ImageAuto extends Model
+class ImageAuto extends BaseImage
 {
-    public $timestamps = false;
-
-    protected $fillable = ['url', 'hash', 'src', 'thumb', 'is_blocked', 'image_hash'];
-
     protected $table = 'image_auto';
 
     /**

@@ -37,8 +37,6 @@ class ImageWorker
      * Запрашивает файл изображения, сохраняет, отсылает ссылки на изображения
      *
      * @param int $image_id
-     *
-     * @return JsonResponse
      */
     public function load(int $image_id)
     {
@@ -48,7 +46,8 @@ class ImageWorker
         // проверить на ошибки в ответе
         if (!$this->hasErrors($result)) {
             // сохранить файл и модель изображения
-            $image = $this->save($result['data']['image']);
+//            $image = $this->save($result['data']['image']);
+            $image = $this->image_service->save($result['data']['image']);
         } else {
             //TODO обработать ошибки
             // завершить таску, если невозможно получить изображение
@@ -63,6 +62,27 @@ class ImageWorker
             // бросить исключение
         }
 
+    }
+
+    /**
+     * Загрузить изображение по ссылке (например, из фида)
+     *
+     * @param string $url
+     * @param int $auto_id
+     */
+    public function loadByUrl(string $url, int $auto_id)
+    {
+        //TODO Дописать метод загрузки изображения из урла
+        return;
+
+        // получить изображение по урлу
+        $image = $this->getImageFromUrl($url);
+
+        // сохранить изображение в сервисе
+        $image = $this->image_service->save($image);
+
+        // отправить ссылку на изображение и auto_id
+        $this->sendServiceUrl($image);
     }
 
     /**
@@ -99,23 +119,5 @@ class ImageWorker
         $result = $this->api->post($url, $data, $header);
 
         return $result;
-    }
-
-    /**
-     * Из переданных данных изображения сделать модель и сохранить изображение в файл
-     *
-     * @param array $image
-     *
-     * @return ImageAuto|ImagePhotobank - модель изображения
-     */
-    protected function save(array $image)
-    {
-        //TODO Сделать вызов из сервиса (изображений или файлов)
-        $relative_path = $this->image_service->makePath($image['path_data']);
-        $src = $this->file_service->saveFile($image['filename'], $image['content'], $relative_path);
-        // создать модель изображения (частный)
-
-        // создать превью изображения
-
     }
 }

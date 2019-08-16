@@ -4,8 +4,9 @@ namespace App\Services\Image;
 
 use App\Http\Controllers\File\Photo;
 use App\Http\Controllers\File\Traits\Processing;
-use App\Models\ImageAuto;
-use App\Models\ImagePhotobank;
+use App\Models\Image\BaseImage;
+use App\Models\Image\ImageAuto;
+use App\Models\Image\ImagePhotobank;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -23,10 +24,11 @@ use Throwable;
  */
 abstract class BaseService
 {
+    //TODO Заменить на сервисный класс
     use Processing;
 
     /**
-     * @var Model
+     * @var BaseImage
      */
     protected $model;
 
@@ -38,6 +40,7 @@ abstract class BaseService
     /**
      * @var Photo работа с файлами изображений (старый код)
      */
+    //TODO Убрать использование класса
     protected $photo;
 
     /**
@@ -65,6 +68,34 @@ abstract class BaseService
      * @return array
      */
     abstract public function getAutoParamList(): array;
+
+    /**
+     * Сохранить изображение из бинарной строки в base64
+     *
+     * @param array $image - содержит название файла с расширением, контент файла и данные для относительного пути
+     */
+    public function saveFromBase64(array $image)
+    {
+        $relative_path = $this->makePath($image['path_data']);
+        $src = $this->file_service->saveFile($image['filename'], $image['content'], $relative_path);
+
+        // создать модель изображения
+        $model = $this->model->newInstance();
+        $model->src = $src;
+
+        // создать превью изображения
+//        $this->
+    }
+
+    /**
+     * Сохранить изображение
+     *
+     * @param $image
+     */
+    public function save($image)
+    {
+
+    }
 
     /**
      * Загрузка изображений по списку ссылок

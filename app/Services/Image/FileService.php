@@ -5,7 +5,7 @@ namespace App\Services\Image;
 use Illuminate\Support\Facades\File;
 
 /**
- * Работа с файлами
+ * Обработка файлов изображений
  */
 class FileService
 {
