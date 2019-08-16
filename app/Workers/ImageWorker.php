@@ -6,6 +6,7 @@ use App\Models\ImageAuto;
 use App\Models\ImagePhotobank;
 use App\Services\BaseApiClient;
 use App\Services\Image\AutoService;
+use App\Services\Image\FileService;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -23,10 +24,13 @@ class ImageWorker
      */
     protected $image_service;
 
-    public function __construct(BaseApiClient $api, AutoService $image_service)
+    protected $file_service;
+
+    public function __construct(BaseApiClient $api, AutoService $image_service, FileService $file_service)
     {
         $this->api = $api;
         $this->image_service = $image_service;
+        $this->file_service = $file_service;
     }
 
     /**
@@ -107,8 +111,11 @@ class ImageWorker
     protected function save(array $image)
     {
         //TODO Сделать вызов из сервиса (изображений или файлов)
-        $src = $this->saveFile($image['filename'], $image['content'], $image['path_data']);
+        $relative_path = $this->image_service->makePath($image['path_data']);
+        $src = $this->file_service->saveFile($image['filename'], $image['content'], $relative_path);
         // создать модель изображения (частный)
+
+        // создать превью изображения
 
     }
 }
