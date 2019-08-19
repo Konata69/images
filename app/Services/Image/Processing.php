@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\File\Traits;
+namespace App\Services\Image;
 
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;

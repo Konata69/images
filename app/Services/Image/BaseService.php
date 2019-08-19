@@ -5,14 +5,12 @@ namespace App\Services\Image;
 use App\Http\Controllers\File\Photo;
 use App\Http\Controllers\File\Traits\Processing;
 use App\Models\Image\BaseImage;
-use App\Models\Image\ImageAuto;
 use App\Models\Image\ImagePhotobank;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Intervention\Image\Facades\Image;
 use Jenssegers\ImageHash\Hash;
 use Jenssegers\ImageHash\ImageHash;
 use Throwable;
@@ -142,7 +140,7 @@ abstract class BaseService
      * @param UploadedFile $file
      * @param string $path
      *
-     * @return Model
+     * @return BaseImage
      */
     public function upload(UploadedFile $file, string $path)
     {
@@ -373,66 +371,61 @@ abstract class BaseService
      * @param bool $block_image блокировать ли изображение при обработке
      *
      * @return ImagePhotobank|Builder|Model|object|null
-     *
-     * @throws \HttpException
      */
     protected function handleUrlImage(string $url, string $path, $block_image = false)
     {
-        // получить хеш
-        $hash = hash_file($this->hash_algo, $url);
-
-        // проверить, есть ли хеш в базе
-        $image = $this->model->newQuery()->where('hash', $hash)->first();
+        $image = $this->initImageModel($url);
 
         // если нашли изображение - сразу отдать
-        if ($image) {
+        if ($image = $this->findImageByHash($image->hash)) {
             return $image;
         }
 
-        // скачать изображение по ссылке
-        // создать временное изображение в файловой системе
-        //TODO убрать создание временного файла
-        // Использовалось для расчета прецептивного хеша
-        // Хеш можно посчитать по ссылке
-        $tmp_path = $this->photo->tempPhotoCreate($url, $path);
-
-        if (!$tmp_path) {
-            throw new \HttpException('Can\'t download file from url: ' . $url);
-        }
-
-        $file = new UploadedFile($tmp_path, basename($tmp_path));
-        $filename = $file->getFilename();
-
-        // получить прецептивный хеш изображения
-        $image_hash = $this->hasher->hash($tmp_path);
-
         // перед обработкой изображения проверяем на похожесть с заблокированными
         if (!$block_image) {
-            $blocked_image = $this->searchBlocked($image_hash->toHex(), $this->getBlockedImageHashList());
+            $image->is_blocked = $this->searchBlocked($image->hash, $this->getBlockedImageHashList());
 
-            // в случае похожести отдать инфу о том, что изображение заблокировано
-            if ($blocked_image) {
-                $image = $this->model->newInstance(['url' => $url, 'is_blocked' => true]);
-
+            if ($image->is_blocked) {
                 return $image;
             }
         }
 
-        // обрезать и сжать изображение
-        $file = $this->prepareFile($file);
-        // переместить файл изображения из временной папки в обычную
-        $this->photo->savePhoto($file, public_path() . $path . '/' . $filename);
-        // удалить временный файл изображения
-        $this->photo->tempPhotoRemove($tmp_path);
+        $src = $this->file_service->prepareAndSavePhoto($image->url, $path);
+        $image->src = $src;
+        $image->save();
 
-        // записать в базу данные изображения
-        $image = $this->model::create([
-            'hash' => $hash,
-            'image_hash' => $image_hash->toHex(),
+        return $image;
+    }
+
+    /**
+     * Инициализировать модель изображения по ссылке
+     *
+     * @param string $url
+     *
+     * @return BaseImage
+     */
+    protected function initImageModel(string $url): BaseImage
+    {
+        $image = $this->model->newInstance([
             'url' => $url,
-            'is_blocked' => $block_image,
-            'src' => $path . '/' . $filename,
+            'hash' => hash_file($this->hash_algo, $url),
+            'image_hash' => $this->hasher->hash($url)->toHex(),
         ]);
+
+        return $image;
+    }
+
+    /**
+     * Найти изображение по хешу изображения из ссылки
+     *
+     * @param string $hash
+     *
+     * @return BaseImage|null
+     */
+    protected function findImageByHash(string $hash): ?BaseImage
+    {
+        // проверить, есть ли хеш в базе
+        $image = $this->model->newQuery()->where('hash', $hash)->first();
 
         return $image;
     }

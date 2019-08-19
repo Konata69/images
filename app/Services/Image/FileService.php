@@ -2,7 +2,6 @@
 
 namespace App\Services\Image;
 
-use App\Http\Controllers\File\Traits\Processing;
 use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
 
@@ -70,6 +69,25 @@ class FileService
     }
 
     /**
+     * Подготовить и сохранить фото
+     *
+     * @param mixed $src - источник фото (url)
+     * @param string $path - относительный путь для сохранения на диск
+     *
+     * @return string - относительный путь к файлу изображения
+     */
+    public function prepareAndSavePhoto($src, string $path): string
+    {
+        // обрезать и сжать изображение
+        $image = $this->processing->prepareFile($src);
+        $filename = uniqid() . '.' . ($image->extension ?? 'jpg');
+        // сохранить файл изображения на диск
+        $path = $this->processing->savePhoto($image, public_path() . $path . '/' . $filename);
+
+        return $path;
+    }
+
+    /**
      * Получить абсолютный путь к файлу
      *
      * @param string $filename
@@ -77,7 +95,7 @@ class FileService
      *
      * @return string
      */
-    public function getFileAbsolutePath(string $filename, string $relative_path): string
+    protected function getFileAbsolutePath(string $filename, string $relative_path): string
     {
         return public_path() . $relative_path . '/' . $filename;
     }
@@ -89,7 +107,7 @@ class FileService
      *
      * @return string
      */
-    public function getDirectoryAbsolutePath(string $relative_path): string
+    protected function getDirectoryAbsolutePath(string $relative_path): string
     {
         return public_path() . $relative_path;
     }
