@@ -180,7 +180,7 @@ abstract class BaseService
             'src' => $path . '/' . $filename,
         ]);
 
-        $this->createThumb($path, $filename, $image, $file);
+        $this->createThumb($image);
 
         return $image;
     }
@@ -482,22 +482,10 @@ abstract class BaseService
      *
      * @return void
      */
-    //TODO Выделить работу с файлом и вынести в файл сервис
     protected function createThumb(BaseImage $image)
     {
-        $path = dirname($image->src);
-        $filename = basename($image->src);
-        $file = Image::make($image->src);
-
-        $thumb_path = $path . '/thumb/' . $filename;
-        $thumb_path_dir = public_path() . $path . '/thumb/';
-
-        if (!file_exists($thumb_path_dir)) {
-            mkdir($thumb_path_dir, 0777, true);
-        }
-
-        $this->photo->saveThumb($file, public_path() . $thumb_path);
-        $image->thumb = $thumb_path;
+        $path = $this->file_service->makeThumb($image->src);
+        $image->thumb = $path;
         $image->save();
     }
 
