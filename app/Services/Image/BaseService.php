@@ -102,12 +102,11 @@ abstract class BaseService
      *
      * @param array $url_list
      * @param string $path
-     * @param bool $create_thumb
      * @param bool $block_image
      *
      * @return array
      */
-    public function load(array $url_list, string $path, bool $create_thumb, bool $block_image)
+    public function load(array $url_list, string $path, bool $block_image)
     {
         // ответ с результатами обработки ссылок на изображения
         $data = [

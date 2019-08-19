@@ -47,7 +47,7 @@ class BaseController extends Controller
         $url_list = (array) $request->url;
 
         // ответ с результатами обработки ссылок на изображения
-        $data = $this->image_service->load($url_list, $path, true, false);
+        $data = $this->image_service->load($url_list, $path, false);
 
         return response()->json($data);
     }
