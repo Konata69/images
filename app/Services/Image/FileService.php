@@ -2,13 +2,25 @@
 
 namespace App\Services\Image;
 
+use App\Http\Controllers\File\Traits\Processing;
 use Illuminate\Support\Facades\File;
+use Intervention\Image\Facades\Image;
 
 /**
  * Обработка файлов изображений
  */
 class FileService
 {
+    /**
+     * @var Processing $processing - обработка изображений
+     */
+    protected $processing;
+
+    public function __construct(Processing $processing)
+    {
+        $this->processing = $processing;
+    }
+
     /**
      * Сохранить файл
      *
@@ -30,6 +42,31 @@ class FileService
         File::replace($absolute_path_file, $content);
 
         return $relative_path . '/' . $name;
+    }
+
+    /**
+     * Создать файл превью из изображения по относительному пути к файлу
+     *
+     * @param string $src - относительный путь к файлу изображения
+     *
+     * @return string - относительный путь к файлу превью
+     */
+    public function makeThumb(string $src): string
+    {
+        $path = dirname($src);
+        $filename = basename($src);
+        $file = Image::make($src);
+
+        $thumb_path = $path . '/thumb/' . $filename;
+        $thumb_path_dir = public_path() . $path . '/thumb/';
+
+        if (!file_exists($thumb_path_dir)) {
+            mkdir($thumb_path_dir, 0777, true);
+        }
+
+        $this->processing->saveThumb($file, public_path() . $thumb_path);
+
+        return $thumb_path;
     }
 
     /**
