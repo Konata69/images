@@ -36,12 +36,6 @@ abstract class BaseService
     protected $hash_algo = 'sha256';
 
     /**
-     * @var Photo работа с файлами изображений (старый код)
-     */
-    //TODO Убрать использование класса
-    protected $photo;
-
-    /**
      * @var FileService работа с файлами изображений (новый сервис)
      */
     protected $file_service;
@@ -51,9 +45,8 @@ abstract class BaseService
      */
     protected $hasher;
 
-    public function __construct(Photo $photo, ImageHash $hasher, FileService $file_service)
+    public function __construct(ImageHash $hasher, FileService $file_service)
     {
-        $this->photo = $photo;
         $this->hasher = $hasher;
         $this->file_service = $file_service;
     }
@@ -164,10 +157,7 @@ abstract class BaseService
             mkdir($directory, 0777, true);
         }
 
-        // обрезать и сжать изображение
-        $file = $this->prepareFile($file);
-        // переместить файл изображения из временной папки в обычную
-        $this->photo->savePhoto($file, $directory . $filename);
+        $this->file_service->prepareAndSavePhoto($file, $directory . $filename);
 
         // записать в базу данные изображения
         $image = $this->model::create([
@@ -233,6 +223,7 @@ abstract class BaseService
      *
      * @throws \HttpException
      */
+    //TODO refactoring
     public function block(string $url): Model
     {
         $path = '/image_blocked';
@@ -246,7 +237,8 @@ abstract class BaseService
             File::move(public_path() . $image->src, public_path() . $path . '/' . basename($image->src));
 
             if ($image->thumb) {
-                $this->photo->tempPhotoRemove(public_path() . $image->thumb);
+                //TODO Убрать зависимость от photo
+//                $this->photo->tempPhotoRemove(public_path() . $image->thumb);
                 $image->thumb = null;
             }
 
@@ -390,7 +382,7 @@ abstract class BaseService
             }
         }
 
-        $src = $this->file_service->prepareAndSavePhoto($image->url, $path);
+        $src = $this->file_service->prepareAndSavePhoto($image->url, $path, true);
         $image->src = $src;
         $image->save();
 

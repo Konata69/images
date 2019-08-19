@@ -73,18 +73,34 @@ class FileService
      *
      * @param mixed $src - источник фото (url)
      * @param string $path - относительный путь для сохранения на диск
+     * @param bool $generate_name - флаг генерации имени файла
+     * true - сгенерировать новое имя,
+     * false - использовать имя файла
      *
      * @return string - относительный путь к файлу изображения
      */
-    public function prepareAndSavePhoto($src, string $path): string
+    public function prepareAndSavePhoto($src, string $path, bool $generate_name = false): string
     {
         // обрезать и сжать изображение
         $image = $this->processing->prepareFile($src);
-        $filename = uniqid() . '.' . ($image->extension ?? 'jpg');
+        // сгенерировать новое имя файла или получить текущее
+        $filename = $generate_name ? $this->generateFilename($image->extension) : $image->basename;
         // сохранить файл изображения на диск
         $path = $this->processing->savePhoto($image, public_path() . $path . '/' . $filename);
 
         return $path;
+    }
+
+    /**
+     * Сгенерировать новое имя файла
+     *
+     * @param string|null $extension - расширение файла
+     *
+     * @return string
+     */
+    protected function generateFilename(?string $extension): string
+    {
+        return uniqid() . '.' . ($extension ?? 'jpg');
     }
 
     /**
