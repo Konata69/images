@@ -119,7 +119,8 @@ abstract class BaseService
         // обработать список ссылок, пройтись по ссылкам и достать изображение
         foreach ($url_list as $url) {
             try {
-                $image = $this->handleUrlImage($url, $path, $create_thumb, $block_image);
+                $image = $this->handleUrlImage($url, $path, $block_image);
+                $this->createThumb($image);
                 // выделить отдельным списком ссылки на заблокированные изображения
                 if ($image->is_blocked) {
                     $data['blocked'][] = $image->url;
@@ -240,7 +241,7 @@ abstract class BaseService
         $path = '/image_blocked';
 
         // создать временный файл изображения, пометить заблокированным
-        $image = BaseService::handleUrlImage($url, $path, false, true);
+        $image = BaseService::handleUrlImage($url, $path, true);
 
         // существующее изображение придет с выключенным флагом, новое - с включенным
         if (!$image->is_blocked) {
@@ -370,14 +371,13 @@ abstract class BaseService
      *
      * @param string $url
      * @param string $path
-     * @param bool $create_thumb
      * @param bool $block_image блокировать ли изображение при обработке
      *
      * @return ImagePhotobank|Builder|Model|object|null
      *
      * @throws \HttpException
      */
-    protected function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false)
+    protected function handleUrlImage(string $url, string $path, $block_image = false)
     {
         // получить хеш
         $hash = hash_file($this->hash_algo, $url);
@@ -392,6 +392,9 @@ abstract class BaseService
 
         // скачать изображение по ссылке
         // создать временное изображение в файловой системе
+        //TODO убрать создание временного файла
+        // Использовалось для расчета прецептивного хеша
+        // Хеш можно посчитать по ссылке
         $tmp_path = $this->photo->tempPhotoCreate($url, $path);
 
         if (!$tmp_path) {
@@ -431,11 +434,6 @@ abstract class BaseService
             'is_blocked' => $block_image,
             'src' => $path . '/' . $filename,
         ]);
-
-        // добавить превью, если необходимо
-        if ($create_thumb) {
-            $this->createThumb($path, $filename, $image, $file);
-        }
 
         return $image;
     }
@@ -479,16 +477,19 @@ abstract class BaseService
     }
 
     /**
-     * Создать превью изображения: файл превью и путь до него в модель изображения
+     * Добавить к изображению превью
      *
-     * @param string $path
-     * @param string $filename
-     * @param ImagePhotobank|ImageAuto $image
-     * @param Image $file
+     * @param BaseImage $image - модель изображения
+     *
+     * @return void
      */
     //TODO Выделить работу с файлом и вынести в файл сервис
-    protected function createThumb(string $path, string $filename, $image, $file)
+    protected function createThumb(BaseImage $image)
     {
+        $path = dirname($image->src);
+        $filename = basename($image->src);
+        $file = Image::make($image->src);
+
         $thumb_path = $path . '/thumb/' . $filename;
         $thumb_path_dir = public_path() . $path . '/thumb/';
 
