@@ -2,8 +2,6 @@
 
 namespace App\Services\Image;
 
-use App\Http\Controllers\File\Photo;
-use App\Http\Controllers\File\Traits\Processing;
 use App\Models\Image\BaseImage;
 use App\Models\Image\ImagePhotobank;
 use Exception;
@@ -22,9 +20,6 @@ use Throwable;
  */
 abstract class BaseService
 {
-    //TODO Заменить на сервисный класс
-    use Processing;
-
     /**
      * @var BaseImage
      */
@@ -220,8 +215,6 @@ abstract class BaseService
      * @param string $url
      *
      * @return Model
-     *
-     * @throws \HttpException
      */
     //TODO refactoring
     public function block(string $url): Model
