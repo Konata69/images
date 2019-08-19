@@ -2,6 +2,7 @@
 
 namespace App\Workers;
 
+use App\Models\Image\BaseImage;
 use App\Models\ImageAuto;
 use App\Models\ImagePhotobank;
 use App\Services\BaseApiClient;
@@ -46,8 +47,7 @@ class ImageWorker
         // проверить на ошибки в ответе
         if (!$this->hasErrors($result)) {
             // сохранить файл и модель изображения
-//            $image = $this->save($result['data']['image']);
-            $image = $this->image_service->save($result['data']['image']);
+            $image = $this->image_service->saveFromBase64($result['data']['image']);
         } else {
             //TODO обработать ошибки
             // завершить таску, если невозможно получить изображение
@@ -62,6 +62,18 @@ class ImageWorker
             // бросить исключение
         }
 
+    }
+
+    protected function sendServiceUrl(BaseImage $image)
+    {
+        // сделать запрос к autoxml на получение файла
+        $url = 'http://127.0.0.1:8000/api/image-service/result';
+        $data = [
+            'image' => $image
+        ];
+        $header[] = 'X-Requested-With: XMLHttpRequest';
+
+        $this->api->post($url, $data, $header);
     }
 
     /**

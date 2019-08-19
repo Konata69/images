@@ -59,6 +59,8 @@ abstract class BaseService
      * Сохранить изображение из бинарной строки в base64
      *
      * @param array $image - содержит название файла с расширением, контент файла и данные для относительного пути
+     *
+     * @return BaseImage
      */
     public function saveFromBase64(array $image)
     {
@@ -70,7 +72,9 @@ abstract class BaseService
         $model->src = $src;
 
         // создать превью изображения
-//        $this->
+        $this->createThumb($model);
+
+        return $model;
     }
 
     /**
