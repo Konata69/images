@@ -28,6 +28,12 @@ class QueueController extends Controller
         return response()->json($data);
     }
 
+    //TODO Убрать тестовый экшен
+    public function testSendServiceUrl(ImageWorker $worker)
+    {
+        return $worker->testSendServiceUrl();
+    }
+
     /**
      * Тестовый экшен
      *
@@ -35,9 +41,10 @@ class QueueController extends Controller
      *
      * @return JsonResponse
      */
+    //TODO Убрать тестовый экшен
     public function test(ImageWorker $worker)
     {
-        $result = $worker->load(423);
+        $result = $worker->load(1422457);
 
         return $result;
     }

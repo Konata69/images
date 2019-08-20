@@ -3,12 +3,10 @@
 namespace App\Workers;
 
 use App\Models\Image\BaseImage;
-use App\Models\ImageAuto;
-use App\Models\ImagePhotobank;
+use App\Models\Image\ImageAuto;
 use App\Services\BaseApiClient;
 use App\Services\Image\AutoService;
 use App\Services\Image\FileService;
-use Illuminate\Http\JsonResponse;
 
 /**
  * Обработчик задач по загрузке изображений
@@ -57,23 +55,43 @@ class ImageWorker
         }
 
         // второй запрос - отдать сервисные ссылки на изображение
+        $image->external_id = $image_id;
         $result = $this->sendServiceUrl($image);
         if ($this->hasErrors($result)) {
+            // в случае ошибок фейлим таску
             // бросить исключение
         }
-
     }
 
-    protected function sendServiceUrl(BaseImage $image)
+    public function testSendServiceUrl()
+    {
+        $image_id = 1422458;
+        $image = ImageAuto::find(46);
+        $image->external_id = $image_id;
+
+        return $this->sendServiceUrl($image);
+    }
+
+    /**
+     * Отправить сервисные ссылки
+     *
+     * @param BaseImage $image
+     *
+     * @return array
+     */
+    protected function sendServiceUrl(BaseImage $image): array
     {
         // сделать запрос к autoxml на получение файла
-        $url = 'http://127.0.0.1:8000/api/image-service/result';
+//        $url = 'http://127.0.0.1:8000/api/image-service/result';
+        $url = 'http://127.0.0.1:8000/api/image-service/result?XDEBUG_SESSION_START=PHPSTORM';
         $data = [
             'image' => $image
         ];
         $header[] = 'X-Requested-With: XMLHttpRequest';
 
-        $this->api->post($url, $data, $header);
+        $result = $this->api->post($url, $data, $header);
+
+        return $result;
     }
 
     /**

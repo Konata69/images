@@ -22,6 +22,8 @@ Route::group(['middleware' => 'auth.basic'], function () {
         Route::prefix('/queue')->group( function () {
             // добавить в очередь загрузку изображения
             Route::post('/load', 'QueueController@load')->name('image-queue-load');
+
+            Route::post('/test-result', 'QueueController@testSendServiceUrl')->name('image-queue-test-result');
         });
 
         //работа с изображениями из фотобанка
