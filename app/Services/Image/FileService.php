@@ -31,7 +31,7 @@ class FileService
      */
     public function saveFile(string $name, string $content, string $relative_path): string
     {
-        //TODO Вместо ручной кодировку использовать Intervention make
+        //TODO Вместо ручной кодировки использовать Intervention make
         $content = base64_decode($content);
 
         if (!File::exists($relative_path)) {

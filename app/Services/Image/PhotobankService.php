@@ -2,8 +2,7 @@
 
 namespace App\Services\Image;
 
-use App\Http\Controllers\File\Photo;
-use App\Models\ImagePhotobank;
+use App\Models\Image\ImagePhotobank;
 use ElForastero\Transliterate\Transliterator;
 use Illuminate\Support\Str;
 use Jenssegers\ImageHash\ImageHash;
@@ -25,9 +24,9 @@ class PhotobankService extends BaseService
      */
     protected $transliterator;
 
-    public function __construct(Photo $photo, ImageHash $hasher, Transliterator $transliterator)
+    public function __construct(ImageHash $hasher, FileService $file_service, Transliterator $transliterator)
     {
-        parent::__construct($photo, $hasher);
+        parent::__construct($hasher, $file_service);
         $this->model = new ImagePhotobank();
         $this->transliterator = $transliterator;
     }
