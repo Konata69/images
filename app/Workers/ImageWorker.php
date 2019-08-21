@@ -56,6 +56,9 @@ class ImageWorker
 
         // второй запрос - отдать сервисные ссылки на изображение
         $image->external_id = $image_id;
+        $image->src = url('/') . $image->src;
+        $image->thumb = url('/') . $image->thumb;
+
         $result = $this->sendServiceUrl($image);
         if ($this->hasErrors($result)) {
             // в случае ошибок фейлим таску
@@ -82,8 +85,7 @@ class ImageWorker
     protected function sendServiceUrl(BaseImage $image): array
     {
         // сделать запрос к autoxml на получение файла
-//        $url = 'http://127.0.0.1:8000/api/image-service/result';
-        $url = 'http://127.0.0.1:8000/api/image-service/result?XDEBUG_SESSION_START=PHPSTORM';
+        $url = 'http://127.0.0.1:8000/api/image-service/result';
         $data = [
             'image' => $image
         ];
