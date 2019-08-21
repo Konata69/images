@@ -33,14 +33,14 @@ class FileService
     {
         //TODO Вместо ручной кодировки использовать Intervention make
         $content = base64_decode($content);
+        $directory_absolute_path = $this->getDirectoryAbsolutePath($relative_path);
 
-        if (!File::exists($relative_path)) {
-            File::makeDirectory($relative_path, 0777, true);
+        if (!File::exists($directory_absolute_path)) {
+            File::makeDirectory($directory_absolute_path, 0777, true);
         }
 
         $absolute_path_file = $this->getFileAbsolutePath($name, $relative_path);
         File::replace($absolute_path_file, $content);
-
         return $relative_path . '/' . $name;
     }
 
@@ -53,9 +53,10 @@ class FileService
      */
     public function makeThumb(string $src): string
     {
+        $src_path = public_path() . $src;
         $path = dirname($src);
         $filename = basename($src);
-        $file = Image::make($src);
+        $file = Image::make($src_path);
 
         $thumb_path = $path . '/thumb/' . $filename;
         $thumb_path_dir = public_path() . $path . '/thumb/';

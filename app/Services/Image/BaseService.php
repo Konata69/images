@@ -68,8 +68,9 @@ abstract class BaseService
         $src = $this->file_service->saveFile($image['filename'], $image['content'], $relative_path);
 
         // создать модель изображения
-        $model = $this->model->newInstance();
-        $model->src = $src;
+        $model = $this->makeImageModelFromSrc($src);
+        // записать в бд
+        $model = $this->model->newQuery()->updateOrCreate(['url' => url('/') . $src], $model->attributesToArray());
 
         // создать превью изображения
         $this->createThumb($model);
@@ -402,6 +403,23 @@ abstract class BaseService
         ]);
 
         return $image;
+    }
+
+    /**
+     * Создать модель изображения из относительного пути к файлу
+     *
+     * @param string $src
+     *
+     * @return BaseImage
+     */
+    protected function makeImageModelFromSrc(string $src): BaseImage
+    {
+        $model = $this->model->newInstance();
+        $model->src = $src;
+        $model->url = url('/') . $src;
+        $model->hash = hash_file($this->hash_algo, public_path() . $src);
+
+        return $model;
     }
 
     /**
