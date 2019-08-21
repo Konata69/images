@@ -124,9 +124,9 @@ class ImageWorker
      */
     protected function hasErrors(array $response): bool
     {
-        $hasErrors = empty($response['data']['error'])
-            && empty($response['error'])
-            && !empty($response['data']['image']);
+        $hasErrors = !empty($response['data']['error'])
+            || !empty($response['error'])
+            || empty($response['data']['image']);
 
         return $hasErrors;
     }
