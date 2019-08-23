@@ -46,6 +46,14 @@ abstract class BaseService
         $this->file_service = $file_service;
     }
 
+    /**
+     * @return BaseImage
+     */
+    public function getModel()
+    {
+        return $this->model;
+    }
+
     abstract public function makePath(array $path_params): string;
 
     /**

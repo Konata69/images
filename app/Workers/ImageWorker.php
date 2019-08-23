@@ -33,6 +33,23 @@ class ImageWorker
     }
 
     /**
+     * Обработать изображение, если оно не создано во внешнем проекте
+     *
+     * @param int $image_id
+     */
+    public function loadIfNotHandled(int $image_id)
+    {
+        if (!$this->isImageHandled($image_id)){
+            $this->load($image_id);
+        }
+    }
+
+    protected function isImageHandled(int $image_id): bool
+    {
+        return $this->image_service->getModel()->newQuery()->where('external_id', $image_id)->exists();
+    }
+
+    /**
      * Запрашивает файл изображения, сохраняет, отсылает ссылки на изображения
      *
      * @param int $image_id

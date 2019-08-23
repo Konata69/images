@@ -28,6 +28,15 @@ class QueueController extends Controller
         return response()->json($data);
     }
 
+    public function migrate(Request $request)
+    {
+        $image_id_list = $request->image_id_list;
+
+        collect($image_id_list)->each(function ($item) {
+
+        });
+    }
+
     //TODO Убрать тестовый экшен
     public function testSendServiceUrl(ImageWorker $worker)
     {
