@@ -44,9 +44,18 @@ class ImageWorker
         }
     }
 
+    /**
+     * Проверить, обработано ли изображение (миграция)
+     *
+     * @param int $image_id
+     *
+     * @return bool
+     */
     protected function isImageHandled(int $image_id): bool
     {
-        return $this->image_service->getModel()->newQuery()->where('external_id', $image_id)->exists();
+        $image = $this->image_service->getModel()->newQuery()->where('external_id', $image_id)->first();
+
+        return !empty($image->migrated);
     }
 
     /**
@@ -81,6 +90,7 @@ class ImageWorker
             // в случае ошибок фейлим таску
             // бросить исключение
         }
+        $image->setMigrated();
     }
 
     public function testSendServiceUrl()

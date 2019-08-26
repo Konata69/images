@@ -14,6 +14,11 @@ class ImageMigrate implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
+     * @var int
+     */
+    protected $image_id;
+
+    /**
      * Create a new job instance.
      *
      * @param int $image_id

@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 
 //TODO Убрать тестовый роут
 Route::post('/image/queue/test', 'Image\QueueController@test')->name('image-queue-test');
+Route::post('/image/queue/test-migrate', 'Image\QueueController@testMigrate')->name('image-queue-test-migrate');
 
 Route::group(['middleware' => 'auth.basic'], function () {
     Route::prefix('/image')->namespace('Image')->group(function () {
@@ -22,6 +23,8 @@ Route::group(['middleware' => 'auth.basic'], function () {
         Route::prefix('/queue')->group( function () {
             // добавить в очередь загрузку изображения
             Route::post('/load', 'QueueController@load')->name('image-queue-load');
+            // добавить в очередь миграции
+            Route::post('/migrate', 'QueueController@migrate')->name('image-queue-migrate');
 
             Route::post('/test-result', 'QueueController@testSendServiceUrl')->name('image-queue-test-result');
         });

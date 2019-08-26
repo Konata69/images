@@ -29,4 +29,20 @@ class BaseImage extends Model
         'external_id' => 'integer',
         'migrated' => 'boolean',
     ];
+
+    public function getMigratedAttribute($value)
+    {
+        return !empty($value);
+    }
+
+    /**
+     * Пометить изображение как перемещенное
+     *
+     * @param bool $value
+     */
+    public function setMigrated(bool $value = true)
+    {
+        $this->migrated = $value;
+        $this->save();
+    }
 }
