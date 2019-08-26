@@ -19,6 +19,14 @@ class BaseImage extends Model
         'src',
         'thumb',
         'is_blocked',
-        'image_hash'
+        'image_hash',
+        'external_id',
+        'migrated',
+    ];
+
+    protected $casts = [
+        'is_blocked' => 'boolean',
+        'external_id' => 'integer',
+        'migrated' => 'boolean',
     ];
 }
