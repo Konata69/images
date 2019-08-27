@@ -7,6 +7,7 @@ use App\Models\Image\ImageAuto;
 use App\Services\BaseApiClient;
 use App\Services\Image\AutoService;
 use App\Services\Image\FileService;
+use Exception;
 
 /**
  * Обработчик задач по загрузке изображений
@@ -36,12 +37,18 @@ class ImageWorker
      * Обработать изображение, если оно не создано во внешнем проекте
      *
      * @param int $image_id
+     *
+     * @throws Exception
      */
     public function loadIfNotHandled(int $image_id)
     {
-        if (!$this->isImageHandled($image_id)){
-            $this->load($image_id);
+        if ($this->isImageHandled($image_id)){
+            return;
         }
+
+        $image = $this->loadImage($image_id);
+        $this->sendServiceUrlMigrate($image);
+        $image->setMigrated();
     }
 
     /**
@@ -59,11 +66,15 @@ class ImageWorker
     }
 
     /**
-     * Запрашивает файл изображения, сохраняет, отсылает ссылки на изображения
+     * Загрузить изображение в сервис
      *
      * @param int $image_id
+     *
+     * @return BaseImage
+     *
+     * @throws Exception
      */
-    public function load(int $image_id)
+    public function loadImage(int $image_id)
     {
         // получить изображение и информацию о нем из api
         $result = $this->getImageFromApi($image_id);
@@ -73,11 +84,8 @@ class ImageWorker
             // сохранить файл и модель изображения
             $image = $this->image_service->saveFromBase64($result['data']['image']);
         } else {
-            //TODO обработать ошибки
-            // завершить таску, если невозможно получить изображение
-            // повторить таску, если возможно получить изображение
-            // для повтора таски бросить исключение
-            return;
+            //TODO обработать возможные ошибки
+            throw new Exception('Image can not be loaded');
         }
 
         // второй запрос - отдать сервисные ссылки на изображение
@@ -85,10 +93,23 @@ class ImageWorker
         $image->src = url('/') . $image->src;
         $image->thumb = url('/') . $image->thumb;
 
+        return $image;
+    }
+
+    /**
+     * Запрашивает файл изображения, сохраняет, отсылает ссылки на изображения
+     *
+     * @param int $image_id
+     *
+     * @throws Exception
+     */
+    public function load(int $image_id)
+    {
+        $image = $this->loadImage($image_id);
+
         $result = $this->sendServiceUrl($image);
         if ($this->hasErrors($result)) {
-            // в случае ошибок фейлим таску
-            // бросить исключение
+            // в случае ошибок фейлим таску, бросаем исключение
         }
         $image->setMigrated();
     }
@@ -113,6 +134,27 @@ class ImageWorker
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/result';
+        $data = [
+            'image' => $image
+        ];
+        $header[] = 'X-Requested-With: XMLHttpRequest';
+
+        $result = $this->api->post($url, $data, $header);
+
+        return $result;
+    }
+
+    /**
+     * Отправить сервисные ссылки при переносе
+     *
+     * @param BaseImage $image
+     *
+     * @return array
+     */
+    protected function sendServiceUrlMigrate(BaseImage $image): array
+    {
+        // сделать запрос к autoxml на получение файла
+        $url = 'http://127.0.0.1:8000/api/image-service/result-migrate';
         $data = [
             'image' => $image
         ];
