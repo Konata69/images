@@ -13,6 +13,8 @@ class ImageLoad implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 2;
+
     /**
      * @var int - id изображения во внешней бд
      */

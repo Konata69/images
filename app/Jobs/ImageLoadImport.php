@@ -13,6 +13,8 @@ class ImageLoadImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 2;
+
     /**
      * @var string - url по которому скачиваем изображение
      */

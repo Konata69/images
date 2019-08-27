@@ -77,7 +77,7 @@ abstract class BaseService
 
         // создать модель изображения
         $model = $this->makeImageModelFromSrc($src);
-        $model->external_id = $image['id'];
+        $model->external_id = $image['image_id'];
         // записать в бд
         $model = $this->model->newQuery()->updateOrCreate(['url' => url('/') . $src], $model->attributesToArray());
 
