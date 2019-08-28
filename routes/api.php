@@ -21,9 +21,11 @@ Route::group(['middleware' => 'auth.basic'], function () {
     Route::prefix('/image')->namespace('Image')->group(function () {
         // работа через очередь
         Route::prefix('/queue')->group( function () {
-            // добавить в очередь загрузку изображения
+            // добавить в очередь загрузку изображения через интерфейс (высокий приоритет)
             Route::post('/load', 'QueueController@load')->name('image-queue-load');
-            // добавить в очередь миграции
+            // добавить в очередь загрузку изображения через импорт (обычный приоритет)
+            Route::post('/import', 'QueueController@loadImport')->name('image-queue-import');
+            // добавить в очередь миграции (обычный приоритет)
             Route::post('/migrate', 'QueueController@migrate')->name('image-queue-migrate');
 
             Route::post('/test-result', 'QueueController@testSendServiceUrl')->name('image-queue-test-result');

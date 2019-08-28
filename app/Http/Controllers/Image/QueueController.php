@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Image;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\ImageLoad;
+use App\Jobs\ImageLoadImport;
 use App\Jobs\ImageMigrate;
 use App\Models\Image\ImageAuto;
 use App\Workers\ImageWorker;
@@ -13,7 +14,7 @@ use Illuminate\Http\Request;
 class QueueController extends Controller
 {
     /**
-     * Добавить изображение в очередь на загрузку
+     * Добавить изображение в очередь на загрузку (при добавлении через интерфейс)
      *
      * @param Request $request
      *
@@ -22,8 +23,31 @@ class QueueController extends Controller
     public function load(Request $request)
     {
         $image_id = $request->image_id;
+        // тип изображения (авто/фотобанк)
+        $image_type = $request->image_type;
+        //TODO в зависимости от типа выбрать модель
 
         ImageLoad::dispatch($image_id)->onQueue('high');
+
+        $data = ['success' => true];
+
+        return response()->json($data);
+    }
+
+    /**
+     * Добавить изображение в очередь на загрузку (при добавлении через импорт)
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function import(Request $request)
+    {
+        //TODO Расширить для работы со списком урлов для одного авто
+        $url = $request->url;
+        $auto_id = $request->auto_id;
+
+        ImageLoadImport::dispatch($url, $auto_id);
 
         $data = ['success' => true];
 
