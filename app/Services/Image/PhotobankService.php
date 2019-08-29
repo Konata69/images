@@ -24,9 +24,9 @@ class PhotobankService extends BaseService
      */
     protected $transliterator;
 
-    public function __construct(ImageHash $hasher, FileService $file_service, Transliterator $transliterator)
+    public function __construct(ImageHash $hasher, FileService $file, FinderService $finder, Transliterator $transliterator)
     {
-        parent::__construct($hasher, $file_service);
+        parent::__construct($hasher, $file, $finder);
         $this->model = new ImagePhotobank();
         $this->transliterator = $transliterator;
     }

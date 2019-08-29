@@ -129,4 +129,24 @@ class FileService
     {
         return public_path() . $relative_path;
     }
+
+    /**
+     * Удаляем файл изображения
+     *
+     * @param string $pathname путь к файлу изображения
+     *
+     * @return bool
+     */
+    public static function removeFile(string $pathname): bool
+    {
+        $dir = public_path();
+
+        $result = false;
+
+        if (file_exists($dir . $pathname)) {
+            $result = unlink($dir . $pathname);
+        }
+
+        return $result;
+    }
 }

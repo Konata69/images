@@ -12,9 +12,9 @@ class AutoService extends BaseService
      */
     protected $model;
 
-    public function __construct(ImageHash $hasher, FileService $file_service)
+    public function __construct(ImageHash $hasher, FileService $file, FinderService $finder)
     {
-        parent::__construct($hasher, $file_service);
+        parent::__construct($hasher, $file, $finder);
         $this->model = new ImageAuto();
     }
 
