@@ -43,11 +43,10 @@ class QueueController extends Controller
      */
     public function import(Request $request)
     {
-        //TODO Расширить для работы со списком урлов для одного авто
-        $url = $request->url;
-        $auto_id = $request->auto_id;
+        $url_list = collect($request->url_list);
+        $auto_id = (int) $request->auto_id;
 
-        ImageLoadImport::dispatch($url, $auto_id);
+        ImageLoadImport::dispatch($url_list, $auto_id);
 
         $data = ['success' => true];
 
