@@ -9,6 +9,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
+/**
+ * Задача по загрузке изображений при ипорте
+ */
 class ImageLoadImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -16,9 +19,9 @@ class ImageLoadImport implements ShouldQueue
     public $tries = 2;
 
     /**
-     * @var string - url по которому скачиваем изображение
+     * @var array - список url по которому скачиваем изображение
      */
-    protected $url;
+    protected $url_list;
 
     /**
      * @var int - id авто во внешней бд
@@ -28,12 +31,12 @@ class ImageLoadImport implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param string $url
+     * @param array $url_list
      * @param int $auto_id
      */
-    public function __construct(string $url, int $auto_id)
+    public function __construct(array $url_list, int $auto_id)
     {
-        $this->url = $url;
+        $this->url_list = $url_list;
         $this->auto_id = $auto_id;
     }
 
@@ -46,6 +49,6 @@ class ImageLoadImport implements ShouldQueue
      */
     public function handle(ImageWorker $worker)
     {
-        $worker->loadByUrl($this->url, $this->auto_id);
+        $worker->loadByUrl($this->url_list, $this->auto_id);
     }
 }
