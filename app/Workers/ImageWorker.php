@@ -114,6 +114,31 @@ class ImageWorker
         $image->setMigrated();
     }
 
+    /**
+     * Загрузить изображение по ссылке (например, из фида)
+     *
+     * @param array $url_list
+     * @param int $card_id
+     * @param int $auto_id
+     */
+    public function loadByUrl(array $url_list, int $card_id, int $auto_id)
+    {
+        // загрузить изображение
+        $path = [
+            'card_id' => $card_id,
+            'auto_id' => $auto_id,
+        ];
+        $path = $this->image_service->makePath($path);
+
+        // сохранить изображение в сервисе
+        $data = $this->image_service->load($url_list, $path);
+
+        // отделить изображения от другой инфы
+
+        // отправить ссылку на изображение и auto_id
+        $this->sendServiceUrlList($data);
+    }
+
     public function testSendServiceUrl()
     {
         $image_id = 1422458;
@@ -145,6 +170,29 @@ class ImageWorker
     }
 
     /**
+     * Отправить сервисные ссылки
+     *
+     * @param array $image_list
+     *
+     * @return array
+     */
+    protected function sendServiceUrlList(array $image_list): array
+    {
+        //TODO разложить модельки в список
+
+        // сделать запрос к autoxml на получение файла
+        $url = 'http://127.0.0.1:8000/api/image-service/result';
+        $data = [
+            'image_list' => $image_list
+        ];
+        $header[] = 'X-Requested-With: XMLHttpRequest';
+
+        $result = $this->api->post($url, $data, $header);
+
+        return $result;
+    }
+
+    /**
      * Отправить сервисные ссылки при переносе
      *
      * @param BaseImage $image
@@ -163,27 +211,6 @@ class ImageWorker
         $result = $this->api->post($url, $data, $header);
 
         return $result;
-    }
-
-    /**
-     * Загрузить изображение по ссылке (например, из фида)
-     *
-     * @param string $url
-     * @param int $auto_id
-     */
-    public function loadByUrl(string $url, int $auto_id)
-    {
-        //TODO Дописать метод загрузки изображения из урла
-        return;
-
-        // получить изображение по урлу
-        $image = $this->getImageFromUrl($url);
-
-        // сохранить изображение в сервисе
-        $image = $this->image_service->save($image);
-
-        // отправить ссылку на изображение и auto_id
-        $this->sendServiceUrl($image);
     }
 
     /**

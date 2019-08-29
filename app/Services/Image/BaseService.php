@@ -228,8 +228,8 @@ abstract class BaseService
         $image = $this->makeImageModelFromUrl($url);
 
         // если нашли изображение по хешу - сразу отдать
-        if ($image = $this->finder->byHash($image->hash)) {
-            return $image;
+        if ($image_local = $this->finder->byHash($image->hash)) {
+            return $image_local;
         }
 
         //TODO Добавить проверку на блокировку изборажения

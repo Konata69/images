@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 //TODO Убрать тестовый роут
 Route::post('/image/queue/test', 'Image\QueueController@test')->name('image-queue-test');
 Route::post('/image/queue/test-migrate', 'Image\QueueController@testMigrate')->name('image-queue-test-migrate');
+Route::post('/image/queue/test-import', 'Image\QueueController@testImport')->name('image-queue-test-import');
 
 Route::group(['middleware' => 'auth.basic'], function () {
     Route::prefix('/image')->namespace('Image')->group(function () {

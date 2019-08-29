@@ -44,9 +44,10 @@ class QueueController extends Controller
     public function import(Request $request)
     {
         $url_list = collect($request->url_list);
+        $card_id = (int) $request->card_id;
         $auto_id = (int) $request->auto_id;
 
-        ImageLoadImport::dispatch($url_list, $auto_id);
+        ImageLoadImport::dispatch($url_list, $card_id, $auto_id);
 
         $data = ['success' => true];
 
@@ -75,6 +76,15 @@ class QueueController extends Controller
         $data = ['success' => true];
 
         return response()->json($data);
+    }
+
+    public function testImport(Request $request, ImageWorker $worker)
+    {
+        $url_list = $request->url;
+        $card_id = (int) $request->card_id;
+        $auto_id = (int) $request->auto_id;
+
+        $worker->loadByUrl($url_list, $card_id, $auto_id);
     }
 
     //TODO Убрать тестовый экшен

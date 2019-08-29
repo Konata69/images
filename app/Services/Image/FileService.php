@@ -87,10 +87,16 @@ class FileService
         $image = $this->processing->prepareFile($src);
         // сгенерировать новое имя файла или получить текущее
         $filename = $generate_name ? $this->generateFilename($image->extension) : $image->basename;
-        // сохранить файл изображения на диск
-        $path = $this->processing->savePhoto($image, public_path() . $path . '/' . $filename);
 
-        return $path;
+        $directory_absolute_path = $this->getDirectoryAbsolutePath($path);
+        if (!File::exists($directory_absolute_path)) {
+            File::makeDirectory($directory_absolute_path, 0777, true);
+        }
+
+        // сохранить файл изображения на диск
+        $this->processing->savePhoto($image, public_path() . $path . '/' . $filename);
+
+        return $path . '/' . $filename;
     }
 
     /**
