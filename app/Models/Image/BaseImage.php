@@ -45,4 +45,15 @@ class BaseImage extends Model
         $this->migrated = $value;
         $this->save();
     }
+
+    /**
+     * Пометить изображение заблокированным
+     *
+     * @param bool $value
+     */
+    public function setBlocked(bool $value = true)
+    {
+        $this->is_blocked = $value;
+        $this->save();
+    }
 }
