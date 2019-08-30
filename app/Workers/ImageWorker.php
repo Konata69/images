@@ -106,7 +106,7 @@ class ImageWorker
     {
         $image = $this->loadImage($image_id, $image_type);
 
-        $result = $this->sendServiceUrl($image);
+        $result = $this->sendServiceUrl($image, $image_type);
         if ($this->hasErrors($result)) {
             // в случае ошибок фейлим таску, бросаем исключение
         }
@@ -147,7 +147,7 @@ class ImageWorker
      */
     protected function addExternalId($image_list, $response)
     {
-
+        //TODO Написать реализацию
     }
 
     public function testSendServiceUrl()
@@ -156,22 +156,24 @@ class ImageWorker
         $image = ImageAuto::find(46);
         $image->external_id = $image_id;
 
-        return $this->sendServiceUrl($image);
+        return $this->sendServiceUrl($image, 'auto');
     }
 
     /**
      * Отправить сервисные ссылки
      *
      * @param BaseImage $image
+     * @param string $image_type
      *
      * @return array
      */
-    protected function sendServiceUrl(BaseImage $image): array
+    protected function sendServiceUrl(BaseImage $image, string $image_type): array
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/result';
         $data = [
-            'image' => $image
+            'image' => $image,
+            'image_type' => $image_type,
         ];
         $header[] = 'X-Requested-With: XMLHttpRequest';
 
@@ -209,15 +211,17 @@ class ImageWorker
      * Отправить сервисные ссылки при переносе
      *
      * @param BaseImage $image
+     * @param string $image_type
      *
      * @return array
      */
-    protected function sendServiceUrlMigrate(BaseImage $image): array
+    protected function sendServiceUrlMigrate(BaseImage $image, string $image_type): array
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/result-migrate';
         $data = [
-            'image' => $image
+            'image' => $image,
+            'image_type' => $image_type,
         ];
         $header[] = 'X-Requested-With: XMLHttpRequest';
 
