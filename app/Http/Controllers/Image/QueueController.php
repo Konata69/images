@@ -25,9 +25,8 @@ class QueueController extends Controller
         $image_id = $request->image_id;
         // тип изображения (авто/фотобанк)
         $image_type = $request->image_type;
-        //TODO в зависимости от типа выбрать модель
 
-        ImageLoad::dispatch($image_id)->onQueue('high');
+        ImageLoad::dispatch($image_id, $image_type)->onQueue('high');
 
         $data = ['success' => true];
 

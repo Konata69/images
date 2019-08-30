@@ -2,43 +2,39 @@
 
 namespace App\Jobs;
 
-use App\Workers\ImageWorker;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class ImageMigrate implements ShouldQueue
+class ImageMigrate extends BaseImageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public $tries = 2;
-
-    /**
-     * @var int
-     */
-    protected $image_id;
 
     /**
      * Create a new job instance.
      *
      * @param int $image_id
+     * @param string $image_type
      */
-    public function __construct(int $image_id)
+    public function __construct(int $image_id, string $image_type)
     {
-        $this->image_id = $image_id;
+        parent::__construct($image_id, $image_type);
     }
 
     /**
      * Execute the job.
      *
-     * @param ImageWorker $worker
-     *
      * @return void
+     *
+     * @throws Exception
      */
-    public function handle(ImageWorker $worker)
+    public function handle()
     {
-        $worker->loadIfNotHandled($this->image_id);
+        parent::handle();
+
+        $this->worker->loadIfNotHandled($this->image_id, $this->image_type);
     }
 }

@@ -5,8 +5,7 @@ namespace App\Workers;
 use App\Models\Image\BaseImage;
 use App\Models\Image\ImageAuto;
 use App\Services\BaseApiClient;
-use App\Services\Image\AutoService;
-use App\Services\Image\FileService;
+use App\Services\Image\BaseService;
 use Exception;
 
 /**
@@ -20,33 +19,31 @@ class ImageWorker
     protected $api;
 
     /**
-     * @var AutoService - сервис изображений авто
+     * @var BaseService - сервис изображений авто
      */
     protected $image_service;
 
-    protected $file_service;
-
-    public function __construct(BaseApiClient $api, AutoService $image_service, FileService $file_service)
+    public function __construct(BaseApiClient $api, BaseService $image_service)
     {
         $this->api = $api;
         $this->image_service = $image_service;
-        $this->file_service = $file_service;
     }
 
     /**
      * Обработать изображение, если оно не создано во внешнем проекте
      *
      * @param int $image_id
+     * @param string $image_type
      *
      * @throws Exception
      */
-    public function loadIfNotHandled(int $image_id)
+    public function loadIfNotHandled(int $image_id, string $image_type)
     {
         if ($this->isImageHandled($image_id)){
             return;
         }
 
-        $image = $this->loadImage($image_id);
+        $image = $this->loadImage($image_id, $image_type);
         $this->sendServiceUrlMigrate($image);
         $image->setMigrated();
     }
@@ -69,15 +66,16 @@ class ImageWorker
      * Загрузить изображение в сервис
      *
      * @param int $image_id
+     * @param string $image_type
      *
      * @return BaseImage
      *
      * @throws Exception
      */
-    public function loadImage(int $image_id)
+    public function loadImage(int $image_id, string $image_type)
     {
         // получить изображение и информацию о нем из api
-        $result = $this->getImageFromApi($image_id);
+        $result = $this->getImageFromApi($image_id, $image_type);
 
         // проверить на ошибки в ответе
         if (!$this->hasErrors($result)) {
@@ -100,12 +98,13 @@ class ImageWorker
      * Запрашивает файл изображения, сохраняет, отсылает ссылки на изображения
      *
      * @param int $image_id
+     * @param string $image_type
      *
      * @throws Exception
      */
-    public function load(int $image_id)
+    public function load(int $image_id, string $image_type)
     {
-        $image = $this->loadImage($image_id);
+        $image = $this->loadImage($image_id, $image_type);
 
         $result = $this->sendServiceUrl($image);
         if ($this->hasErrors($result)) {
@@ -193,6 +192,8 @@ class ImageWorker
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/result-import';
+        //TODO Убрать отладочный параметр
+        $url .= '?XDEBUG_SESSION_START=PHPSTORM';
         $data = [
             'image_list' => collect($image_list)->toJson(),
             'auto_id' => $auto_id,
@@ -245,14 +246,18 @@ class ImageWorker
      * Получить информацию об изображении из api
      *
      * @param int $image_id
+     * @param string $image_type
      *
      * @return array
      */
-    protected function getImageFromApi(int $image_id)
+    protected function getImageFromApi(int $image_id, string $image_type)
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/image';
-        $data = ['image_id' => $image_id];
+        $data = [
+            'image_id' => $image_id,
+            'image_type' => $image_type,
+        ];
         $header[] = 'X-Requested-With: XMLHttpRequest';
 
         // первый запрос - на получение файла изображения

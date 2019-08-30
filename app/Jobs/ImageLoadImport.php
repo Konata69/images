@@ -2,12 +2,14 @@
 
 namespace App\Jobs;
 
+use App\Services\Image\AutoService;
 use App\Workers\ImageWorker;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\App;
 
 /**
  * Задача по загрузке изображений при ипорте
@@ -17,6 +19,8 @@ class ImageLoadImport implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 2;
+
+    public $timeout = 360;
 
     /**
      * @var array - список url по которому скачиваем изображение
@@ -50,12 +54,13 @@ class ImageLoadImport implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @param ImageWorker $worker
-     *
      * @return void
      */
-    public function handle(ImageWorker $worker)
+    public function handle()
     {
+        $image_service = App::make(AutoService::class);
+        $worker = App::make(ImageWorker::class, ['image_service' => $image_service]);
+
         $worker->loadByUrl($this->url_list, $this->card_id, $this->auto_id);
     }
 }
