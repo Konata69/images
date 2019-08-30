@@ -133,10 +133,22 @@ class ImageWorker
         // сохранить изображение в сервисе
         $data = $this->image_service->load($url_list, $path);
 
-        // отделить изображения от другой инфы
-
         // отправить ссылку на изображение и auto_id
-        $this->sendServiceUrlList($data);
+        $result = $this->sendServiceUrlList($data['image'], $auto_id);
+
+        // дописать external_id в модели
+        $this->addExternalId($data['image'], $result);
+    }
+
+    /**
+     * Дописать external_id в модели
+     *
+     * @param $image_list
+     * @param $response
+     */
+    protected function addExternalId($image_list, $response)
+    {
+
     }
 
     public function testSendServiceUrl()
@@ -173,17 +185,17 @@ class ImageWorker
      * Отправить сервисные ссылки
      *
      * @param array $image_list
+     * @param int $auto_id
      *
      * @return array
      */
-    protected function sendServiceUrlList(array $image_list): array
+    protected function sendServiceUrlList(array $image_list, int $auto_id): array
     {
-        //TODO разложить модельки в список
-
         // сделать запрос к autoxml на получение файла
-        $url = 'http://127.0.0.1:8000/api/image-service/result';
+        $url = 'http://127.0.0.1:8000/api/image-service/result-import';
         $data = [
-            'image_list' => $image_list
+            'image_list' => collect($image_list)->toJson(),
+            'auto_id' => $auto_id,
         ];
         $header[] = 'X-Requested-With: XMLHttpRequest';
 
