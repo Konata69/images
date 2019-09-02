@@ -44,7 +44,7 @@ class ImageWorker
         }
 
         $image = $this->loadImage($image_id, $image_type);
-        $this->sendServiceUrlMigrate($image);
+        $this->sendServiceUrlMigrate($image, $image_type);
         $image->setMigrated();
     }
 
@@ -88,8 +88,7 @@ class ImageWorker
 
         // второй запрос - отдать сервисные ссылки на изображение
         $image->external_id = $image_id;
-        $image->src = url('/') . $image->src;
-        $image->thumb = url('/') . $image->thumb;
+        $image->setServiceUrl();
 
         return $image;
     }
@@ -171,6 +170,8 @@ class ImageWorker
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/result';
+        //TODO Убрать отладочный параметр
+        $url .= '?XDEBUG_SESSION_START=PHPSTORM';
         $data = [
             'image' => $image,
             'image_type' => $image_type,

@@ -115,8 +115,7 @@ abstract class BaseService
                 if ($image->is_blocked) {
                     $data['blocked'][] = $image->url;
                 } else {
-                    $image->src = url('/') . $image->src;
-                    $image->thumb = url('/') . $image->thumb;
+                    $image->setServiceUrl();
                     $data['image'][] = $image;
                 }
             } catch (Throwable $e) {

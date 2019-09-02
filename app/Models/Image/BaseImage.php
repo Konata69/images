@@ -56,4 +56,13 @@ class BaseImage extends Model
         $this->is_blocked = $value;
         $this->save();
     }
+
+    /**
+     * заполнить сервисные ссылки у модели
+     */
+    public function setServiceUrl()
+    {
+        $this->service_src = url('/') . $this->src;
+        $this->service_thumb = url('/') . $this->thumb;
+    }
 }

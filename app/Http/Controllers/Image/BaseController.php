@@ -70,8 +70,7 @@ class BaseController extends Controller
 
         $image = $this->image_service->upload($file, $path);
 
-        $image->src = url('/') . $image->src;
-        $image->thumb = url('/') . $image->thumb;
+        $image->setServiceUrl();
 
         return response()->json($image);
     }
