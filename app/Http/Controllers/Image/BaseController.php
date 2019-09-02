@@ -86,7 +86,7 @@ class BaseController extends Controller
      */
     public function removeAction(Request $request)
     {
-        $data = $this->image_service->remove($request->src);
+        $data = $this->image_service->remove((int) $request->id);
 
         return response()->json($data);
     }

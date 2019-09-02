@@ -175,16 +175,14 @@ abstract class BaseService
     /**
      * Удалить изображение по внутренней ссылке (src)
      *
-     * @param string $src
+     * @param int $id
      *
      * @return array - статус удаления
      *
      * @throws Exception
      */
-    public function remove(string $src): array
+    public function remove(int $id): array
     {
-        $parsed = parse_url($src);
-        $src = $parsed['path'];
         $result = [
             'row_found' => false,
             'image_deleted' => false,
@@ -192,13 +190,13 @@ abstract class BaseService
             'row_deleted' => false,
         ];
 
-        if (!empty($src)) {
-            $image = $this->model->newQuery()->where('src', $src)->first();
+        if (!empty($id)) {
+            $image = $this->model->newQuery()->where('external_id', $id)->first();
 
             if (!empty($image)) {
                 // нашли изображение - удаляем файлы и запись в бд
                 $result['row_found'] = true;
-                $result['image_deleted'] = FileService::removeFile($src);
+                $result['image_deleted'] = FileService::removeFile($image->src);
                 $result['thumb_deleted'] = FileService::removeFile($image->thumb);
 
                 $result['row_deleted'] = (bool) $image->delete();
