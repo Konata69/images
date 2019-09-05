@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BlockImage;
 use App\Http\Requests\ImageLoad;
 use App\Services\Image\BaseService;
+use App\Services\Image\BlockService;
+use App\Services\Image\FinderService;
 use Exception;
 use HttpException;
 use Illuminate\Http\JsonResponse;
@@ -47,7 +49,7 @@ class BaseController extends Controller
         $url_list = (array) $request->url;
 
         // ответ с результатами обработки ссылок на изображения
-        $data = $this->image_service->load($url_list, $path, true, false);
+        $data = $this->image_service->load($url_list, $path);
 
         return response()->json($data);
     }
@@ -68,8 +70,7 @@ class BaseController extends Controller
 
         $image = $this->image_service->upload($file, $path);
 
-        $image->src = url('/') . $image->src;
-        $image->thumb = url('/') . $image->thumb;
+        $image->setServiceUrl();
 
         return response()->json($image);
     }
@@ -85,7 +86,7 @@ class BaseController extends Controller
      */
     public function removeAction(Request $request)
     {
-        $data = $this->image_service->remove($request->src);
+        $data = $this->image_service->remove((int) $request->id);
 
         return response()->json($data);
     }
@@ -104,7 +105,7 @@ class BaseController extends Controller
         $url = $request->input('url');
 
         // блокируем изображение по ссылке и получаем информациою об изображении
-        $image = $this->image_service->block($url);
+        $image = BlockService::block($url);
 
         return response()->json($image);
     }
@@ -119,7 +120,7 @@ class BaseController extends Controller
     public function byUrlView(Request $request)
     {
         $url_list = (array) $request->url;
-        $data = $this->image_service->byUrl($url_list);
+        $data = FinderService::byUrl($url_list);
 
         return response()->json($data);
     }
@@ -134,7 +135,7 @@ class BaseController extends Controller
     public function byHashView(Request $request)
     {
         $hash_list = (array) $request->hash;
-        $data = $this->image_service->findImageByHashList($hash_list);
+        $data = FinderService::findImageByHashList($hash_list);
 
         return response()->json($data);
     }
