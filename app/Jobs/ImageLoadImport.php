@@ -58,9 +58,7 @@ class ImageLoadImport implements ShouldQueue
      */
     public function handle()
     {
-        $image_service = App::make(AutoService::class);
-        $worker = App::make(ImageWorker::class, ['image_service' => $image_service]);
-
+        $worker = ImageWorker::makeWithAutoService();
         $worker->loadByUrl($this->url_list, $this->card_id, $this->auto_id);
     }
 }

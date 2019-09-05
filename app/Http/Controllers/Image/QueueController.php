@@ -77,12 +77,13 @@ class QueueController extends Controller
         return response()->json($data);
     }
 
-    public function testImport(Request $request, ImageWorker $worker)
+    public function testImport(Request $request)
     {
         $url_list = $request->url;
         $card_id = (int) $request->card_id;
         $auto_id = (int) $request->auto_id;
 
+        $worker = ImageWorker::makeWithAutoService();
         $worker->loadByUrl($url_list, $card_id, $auto_id);
     }
 

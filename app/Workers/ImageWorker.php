@@ -5,8 +5,10 @@ namespace App\Workers;
 use App\Models\Image\BaseImage;
 use App\Models\Image\ImageAuto;
 use App\Services\BaseApiClient;
+use App\Services\Image\AutoService;
 use App\Services\Image\BaseService;
 use Exception;
+use Illuminate\Support\Facades\App;
 
 /**
  * Обработчик задач по загрузке изображений
@@ -27,6 +29,15 @@ class ImageWorker
     {
         $this->api = $api;
         $this->image_service = $image_service;
+    }
+
+    public static function makeWithAutoService(): ImageWorker
+    {
+        $image_service = App::make(AutoService::class);
+        /** @var ImageWorker $worker */
+        $worker = App::make(ImageWorker::class, ['image_service' => $image_service]);
+
+        return $worker;
     }
 
     /**
