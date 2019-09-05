@@ -170,8 +170,6 @@ class ImageWorker
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/result';
-        //TODO Убрать отладочный параметр
-        $url .= '?XDEBUG_SESSION_START=PHPSTORM';
         $data = [
             'image' => $image,
             'image_type' => $image_type,
@@ -195,8 +193,6 @@ class ImageWorker
     {
         // сделать запрос к autoxml на получение файла
         $url = 'http://127.0.0.1:8000/api/image-service/result-import';
-        //TODO Убрать отладочный параметр
-        $url .= '?XDEBUG_SESSION_START=PHPSTORM';
         $data = [
             'image_list' => collect($image_list)->toJson(),
             'auto_id' => $auto_id,
