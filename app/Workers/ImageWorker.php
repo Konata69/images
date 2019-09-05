@@ -152,12 +152,19 @@ class ImageWorker
     /**
      * Дописать external_id в модели
      *
-     * @param $image_list
+     * @param array $image_list
      * @param $response
      */
     protected function addExternalId($image_list, $response)
     {
-        //TODO Написать реализацию
+        $image_list_external = collect($response['data']['image']);
+        foreach ($image_list as $image) {
+            $image_external = $image_list_external->where('feed_url', $image->url)->first();
+            $image->external_id = $image_external['id'];
+            unset($image->service_src);
+            unset($image->service_thumb);
+            $image->save();
+        }
     }
 
     public function testSendServiceUrl()
