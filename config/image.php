@@ -15,6 +15,9 @@ return [
     |
     */
 
-    'driver' => 'imagick'
+    'driver' => 'imagick',
+
+    // алгоритм хеширования файлов изображений
+    'hash_algo' => env('IMAGE_HASH_ALGO', 'sha256'),
 
 ];

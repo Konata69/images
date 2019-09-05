@@ -2,17 +2,9 @@
 
 namespace App\Services\Image;
 
-use App\Http\Controllers\File\Photo;
-use App\Http\Controllers\File\Traits\Processing;
-use App\Models\ImageAuto;
-use App\Models\ImagePhotobank;
+use App\Models\Image\BaseImage;
 use Exception;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
-use Intervention\Image\Facades\Image;
-use Jenssegers\ImageHash\Hash;
 use Jenssegers\ImageHash\ImageHash;
 use Throwable;
 
@@ -23,32 +15,45 @@ use Throwable;
  */
 abstract class BaseService
 {
-    use Processing;
-
     /**
-     * @var Model
+     * @var BaseImage
      */
     protected $model;
 
     /**
      * @var string алгоритм хеширования файлов изображений
      */
-    protected $hash_algo = 'sha256';
+    protected $hash_algo;
 
     /**
-     * @var Photo работа с файлами изображений
+     * @var FileService работа с файлами изображений (новый сервис)
      */
-    protected $photo;
+    protected $file;
+
+    /**
+     * @var FinderService - сервис поиска изображений по урлу и хешу
+     */
+    protected $finder;
 
     /**
      * @var ImageHash $hasher Расчет прецептивного хеша изображения
      */
     protected $hasher;
 
-    public function __construct(Photo $photo, ImageHash $hasher)
+    public function __construct(ImageHash $hasher, FileService $file, FinderService $finder)
     {
-        $this->photo = $photo;
         $this->hasher = $hasher;
+        $this->file = $file;
+        $this->finder = $finder;
+        $this->hash_algo = config('image.hash_algo');
+    }
+
+    /**
+     * @return BaseImage
+     */
+    public function getModel()
+    {
+        return $this->model;
     }
 
     abstract public function makePath(array $path_params): string;
@@ -61,16 +66,38 @@ abstract class BaseService
     abstract public function getAutoParamList(): array;
 
     /**
+     * Сохранить изображение из бинарной строки в base64
+     *
+     * @param array $image - содержит название файла с расширением, контент файла и данные для относительного пути
+     *
+     * @return BaseImage
+     */
+    public function saveFromBase64(array $image)
+    {
+        $relative_path = $this->makePath($image['path_data']);
+        $src = $this->file->saveFile($image['filename'], $image['content'], $relative_path);
+
+        // создать модель изображения
+        $model = $this->makeImageModelFromSrc($src);
+        $model->external_id = $image['image_id'];
+        // записать в бд
+        $model = $this->model->newQuery()->updateOrCreate(['url' => url('/') . $src], $model->attributesToArray());
+
+        // создать превью изображения
+        $this->createThumb($model);
+
+        return $model;
+    }
+
+    /**
      * Загрузка изображений по списку ссылок
      *
      * @param array $url_list
      * @param string $path
-     * @param bool $create_thumb
-     * @param bool $block_image
      *
      * @return array
      */
-    public function load(array $url_list, string $path, bool $create_thumb, bool $block_image)
+    public function load(array $url_list, string $path)
     {
         // ответ с результатами обработки ссылок на изображения
         $data = [
@@ -82,13 +109,13 @@ abstract class BaseService
         // обработать список ссылок, пройтись по ссылкам и достать изображение
         foreach ($url_list as $url) {
             try {
-                $image = $this->handleUrlImage($url, $path, $create_thumb, $block_image);
+                $image = $this->handleUrlImage($url, $path);
+                $this->createThumb($image);
                 // выделить отдельным списком ссылки на заблокированные изображения
                 if ($image->is_blocked) {
                     $data['blocked'][] = $image->url;
                 } else {
-                    $image->src = url('/') . $image->src;
-                    $image->thumb = url('/') . $image->thumb;
+                    $image->setServiceUrl();
                     $data['image'][] = $image;
                 }
             } catch (Throwable $e) {
@@ -105,7 +132,7 @@ abstract class BaseService
      * @param UploadedFile $file
      * @param string $path
      *
-     * @return Model
+     * @return BaseImage
      */
     public function upload(UploadedFile $file, string $path)
     {
@@ -129,10 +156,7 @@ abstract class BaseService
             mkdir($directory, 0777, true);
         }
 
-        // обрезать и сжать изображение
-        $file = $this->prepareFile($file);
-        // переместить файл изображения из временной папки в обычную
-        $this->photo->savePhoto($file, $directory . $filename);
+        $this->file->prepareAndSavePhoto($file, $directory . $filename);
 
         // записать в базу данные изображения
         $image = $this->model::create([
@@ -143,7 +167,7 @@ abstract class BaseService
             'src' => $path . '/' . $filename,
         ]);
 
-        $this->createThumb($path, $filename, $image, $file);
+        $this->createThumb($image);
 
         return $image;
     }
@@ -151,16 +175,14 @@ abstract class BaseService
     /**
      * Удалить изображение по внутренней ссылке (src)
      *
-     * @param string $src
+     * @param int $id
      *
      * @return array - статус удаления
      *
      * @throws Exception
      */
-    public function remove(string $src): array
+    public function remove(int $id): array
     {
-        $parsed = parse_url($src);
-        $src = $parsed['path'];
         $result = [
             'row_found' => false,
             'image_deleted' => false,
@@ -168,14 +190,14 @@ abstract class BaseService
             'row_deleted' => false,
         ];
 
-        if (!empty($src)) {
-            $image = $this->model->newQuery()->where('src', $src)->first();
+        if (!empty($id)) {
+            $image = $this->model->newQuery()->where('external_id', $id)->first();
 
             if (!empty($image)) {
                 // нашли изображение - удаляем файлы и запись в бд
                 $result['row_found'] = true;
-                $result['image_deleted'] = $this->removeFile($src);
-                $result['thumb_deleted'] = $this->removeFile($image->thumb);
+                $result['image_deleted'] = FileService::removeFile($image->src);
+                $result['thumb_deleted'] = FileService::removeFile($image->thumb);
 
                 $result['row_deleted'] = (bool) $image->delete();
             } else {
@@ -190,217 +212,65 @@ abstract class BaseService
     }
 
     /**
-     * Блокировать изображение по ссылке
-     *
-     * @param string $url
-     *
-     * @return Model
-     *
-     * @throws \HttpException
-     */
-    public function block(string $url): Model
-    {
-        $path = '/image_blocked';
-
-        // создать временный файл изображения, пометить заблокированным
-        $image = BaseService::handleUrlImage($url, $path, false, true);
-
-        // существующее изображение придет с выключенным флагом, новое - с включенным
-        if (!$image->is_blocked) {
-            // удалить превью изображения и переместить оригинал в папку к заблокированным изображениям
-            File::move(public_path() . $image->src, public_path() . $path . '/' . basename($image->src));
-
-            if ($image->thumb) {
-                $this->photo->tempPhotoRemove(public_path() . $image->thumb);
-                $image->thumb = null;
-            }
-
-            $image->src = $path . '/' . basename($image->src);
-            $image->is_blocked = true;
-            $image->save();
-        }
-
-        $image->src = url('/') . $image->src;
-
-        return $image;
-    }
-
-    /**
-     * Поиск изображений по списку ссылок
-     *
-     * @param array $url_list
-     *
-     * @return array
-     */
-    public function byUrl(array $url_list): array
-    {
-        // получить список хешей
-        $hash_list = [];
-        $data = [];
-        // список соответствия хешей урлам $hash => $url
-        $hash_url = [];
-
-        foreach ($url_list as $url) {
-            try {
-                $hash = hash_file($this->hash_algo, $url);
-                $hash_list[] = $hash;
-                $hash_url[$hash] = $url;
-            } catch (Throwable $e) {
-                $data['error'][] = $this->errorItem($url, $e->getMessage());
-            }
-        }
-
-        $data = array_merge($this->findImageByHashList($hash_list), $data);
-
-        if (!empty($data['not_found'])) {
-            $data['not_found'] = $this->addUrlToHash($data['not_found'], $hash_url);
-        }
-
-        return $data;
-    }
-
-    /**
-     * Поиск информации об изображениях по списку хешей
-     *
-     * @param array $hash_list
-     *
-     * @return array
-     */
-    public function findImageByHashList(array $hash_list): array
-    {
-        $image_list = $this->model->newQuery()->whereIn('hash', $hash_list)->get();
-        $not_found_hash_list = array_diff($hash_list, $image_list->pluck('hash')->toArray());
-
-        // дополнить ссылки на изображения и превью (если есть)
-        $image_list->map(function ($image) {
-            $image->src = url('/') . $image->src;
-            $image->thumb = !empty($image->thumb) ? url('/') . $image->thumb : $image->thumb;
-
-            return $image;
-        });
-
-        // данные об изображениях
-        $data = [];
-        $data['image'] = $image_list;
-
-        if ($not_found_hash_list) {
-            $data['not_found'] = $not_found_hash_list;
-        }
-
-        return $data;
-    }
-
-    /**
-     * Найти похожее изображение среди заблокированных
-     *
-     * @param string $image_hash прецептивный хеш оригинала изображения в шестнадцатиричной системе счисления
-     * @param array $blocked_image_hash_list - список прецептивных хешей заблокированных изображений
-     *
-     * @return string|null
-     */
-    protected function searchBlocked(string $image_hash, array $blocked_image_hash_list): ?string
-    {
-        $image_hash = Hash::fromHex($image_hash);
-
-        foreach ($blocked_image_hash_list as $blocked_image_hash) {
-            $blocked_image_hash = Hash::fromHex($blocked_image_hash);
-            $distance = $this->hasher->distance($image_hash, $blocked_image_hash);
-
-            if ($distance <= 5) {
-                return $blocked_image_hash->toHex();
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Получить список прецептивных хешей заблокированных изображений
-     *
-     * @return array
-     */
-    protected function getBlockedImageHashList()
-    {
-        return $this->model->newQuery()
-            ->select('image_hash')
-            ->where('is_blocked', true)
-            ->pluck('image_hash')
-            ->toArray();
-    }
-
-    /**
      * Обработать изображение по ссылке, скачать, если это возможно
      *
      * @param string $url
      * @param string $path
-     * @param bool $create_thumb
-     * @param bool $block_image блокировать ли изображение при обработке
      *
-     * @return ImagePhotobank|Builder|Model|object|null
-     *
-     * @throws \HttpException
+     * @return BaseImage
      */
-    protected function handleUrlImage(string $url, string $path, $create_thumb = true, $block_image = false)
+    protected function handleUrlImage(string $url, string $path)
     {
-        // получить хеш
-        $hash = hash_file($this->hash_algo, $url);
+        // инициализировать модель с хешем и прецептивным хешем
+        $image = $this->makeImageModelFromUrl($url);
 
-        // проверить, есть ли хеш в базе
-        $image = $this->model->newQuery()->where('hash', $hash)->first();
-
-        // если нашли изображение - сразу отдать
-        if ($image) {
-            return $image;
+        // если нашли изображение по хешу - сразу отдать
+        if ($image_local = $this->finder->byHash($image->hash)) {
+            return $image_local;
         }
 
-        // скачать изображение по ссылке
-        // создать временное изображение в файловой системе
-        $tmp_path = $this->photo->tempPhotoCreate($url, $path);
+        //TODO Добавить проверку на блокировку изборажения
 
-        if (!$tmp_path) {
-            throw new \HttpException('Can\'t download file from url: ' . $url);
-        }
-
-        $file = new UploadedFile($tmp_path, basename($tmp_path));
-        $filename = $file->getFilename();
-
-        // получить прецептивный хеш изображения
-        $image_hash = $this->hasher->hash($tmp_path);
-
-        // перед обработкой изображения проверяем на похожесть с заблокированными
-        if (!$block_image) {
-            $blocked_image = $this->searchBlocked($image_hash->toHex(), $this->getBlockedImageHashList());
-
-            // в случае похожести отдать инфу о том, что изображение заблокировано
-            if ($blocked_image) {
-                $image = $this->model->newInstance(['url' => $url, 'is_blocked' => true]);
-
-                return $image;
-            }
-        }
-
-        // обрезать и сжать изображение
-        $file = $this->prepareFile($file);
-        // переместить файл изображения из временной папки в обычную
-        $this->photo->savePhoto($file, public_path() . $path . '/' . $filename);
-        // удалить временный файл изображения
-        $this->photo->tempPhotoRemove($tmp_path);
-
-        // записать в базу данные изображения
-        $image = $this->model::create([
-            'hash' => $hash,
-            'image_hash' => $image_hash->toHex(),
-            'url' => $url,
-            'is_blocked' => $block_image,
-            'src' => $path . '/' . $filename,
-        ]);
-
-        // добавить превью, если необходимо
-        if ($create_thumb) {
-            $this->createThumb($path, $filename, $image, $file);
-        }
+        $src = $this->file->prepareAndSavePhoto($image->url, $path, true);
+        $image->src = $src;
+        $image->save();
 
         return $image;
+    }
+
+    /**
+     * Инициализировать модель изображения по ссылке
+     *
+     * @param string $url
+     *
+     * @return BaseImage
+     */
+    protected function makeImageModelFromUrl(string $url): BaseImage
+    {
+        $image = $this->model->newInstance([
+            'url' => $url,
+            'hash' => hash_file($this->hash_algo, $url),
+            'image_hash' => $this->hasher->hash($url)->toHex(),
+        ]);
+
+        return $image;
+    }
+
+    /**
+     * Создать модель изображения из относительного пути к файлу
+     *
+     * @param string $src
+     *
+     * @return BaseImage
+     */
+    protected function makeImageModelFromSrc(string $src): BaseImage
+    {
+        $model = $this->model->newInstance();
+        $model->src = $src;
+        $model->url = url('/') . $src;
+        $model->hash = hash_file($this->hash_algo, public_path() . $src);
+
+        return $model;
     }
 
     /**
@@ -442,44 +312,16 @@ abstract class BaseService
     }
 
     /**
-     * Создать превью изображения: файл превью и путь до него в модель изображения
+     * Добавить к изображению превью
      *
-     * @param string $path
-     * @param string $filename
-     * @param ImagePhotobank|ImageAuto $image
-     * @param Image $file
+     * @param BaseImage $image - модель изображения
+     *
+     * @return void
      */
-    protected function createThumb(string $path, string $filename, $image, $file)
+    protected function createThumb(BaseImage $image)
     {
-        $thumb_path = $path . '/thumb/' . $filename;
-        $thumb_path_dir = public_path() . $path . '/thumb/';
-
-        if (!file_exists($thumb_path_dir)) {
-            mkdir($thumb_path_dir, 0777, true);
-        }
-
-        $this->photo->saveThumb($file, public_path() . $thumb_path);
-        $image->thumb = $thumb_path;
+        $path = $this->file->makeThumb($image->src);
+        $image->thumb = $path;
         $image->save();
-    }
-
-    /**
-     * Удаляем файл изображения
-     *
-     * @param string $pathname путь к файлу изображения
-     *
-     * @return bool
-     */
-    protected function removeFile(string $pathname): bool
-    {
-        $dir = public_path();
-
-        $result = false;
-
-        if (file_exists($dir . $pathname)) {
-            $result = unlink($dir . $pathname);
-        }
-
-        return $result;
     }
 }

@@ -2,8 +2,7 @@
 
 namespace App\Services\Image;
 
-use App\Http\Controllers\File\Photo;
-use App\Models\ImageAuto;
+use App\Models\Image\ImageAuto;
 use Jenssegers\ImageHash\ImageHash;
 
 class AutoService extends BaseService
@@ -13,9 +12,9 @@ class AutoService extends BaseService
      */
     protected $model;
 
-    public function __construct(Photo $photo, ImageHash $hasher)
+    public function __construct(ImageHash $hasher, FileService $file, FinderService $finder)
     {
-        parent::__construct($photo, $hasher);
+        parent::__construct($hasher, $file, $finder);
         $this->model = new ImageAuto();
     }
 
