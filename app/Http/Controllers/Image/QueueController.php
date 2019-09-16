@@ -100,14 +100,8 @@ class QueueController extends Controller
         $worker->loadIfNotHandled((int) $image_id);
     }
 
-    /**
-     * Тестовый экшен
-     *
-     * @param ImageWorker $worker
-     */
-    //TODO Убрать тестовый экшен
-    public function test(ImageWorker $worker)
+    public function importUpdate(Request $request)
     {
-        $worker->load(1422475);
+
     }
 }
