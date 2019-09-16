@@ -16,6 +16,11 @@ use Illuminate\Support\Facades\App;
 class ImageWorker
 {
     /**
+     * @var string
+     */
+    protected $base_url;
+
+    /**
      * @var BaseApiClient - работа через со сторонним сервисом
      */
     protected $api;
@@ -29,6 +34,7 @@ class ImageWorker
     {
         $this->api = $api;
         $this->image_service = $image_service;
+        $this->base_url = config('image.target_url');
     }
 
     public static function makeWithAutoService(): ImageWorker
@@ -187,7 +193,7 @@ class ImageWorker
     protected function sendServiceUrl(BaseImage $image, string $image_type): array
     {
         // сделать запрос к autoxml на получение файла
-        $url = 'http://127.0.0.1:8000/api/image-service/result';
+        $url = $this->base_url . 'api/image-service/result';
         $data = [
             'image' => $image,
             'image_type' => $image_type,
@@ -210,7 +216,7 @@ class ImageWorker
     protected function sendServiceUrlList(array $image_list, int $auto_id): array
     {
         // сделать запрос к autoxml на получение файла
-        $url = 'http://127.0.0.1:8000/api/image-service/result-import';
+        $url = $this->base_url . 'api/image-service/result-import';
         $data = [
             'image_list' => collect($image_list)->toJson(),
             'auto_id' => $auto_id,
@@ -233,7 +239,7 @@ class ImageWorker
     protected function sendServiceUrlMigrate(BaseImage $image, string $image_type): array
     {
         // сделать запрос к autoxml на получение файла
-        $url = 'http://127.0.0.1:8000/api/image-service/result-migrate';
+        $url = $this->base_url . 'api/image-service/result-migrate';
         $data = [
             'image' => $image,
             'image_type' => $image_type,
@@ -272,7 +278,7 @@ class ImageWorker
     protected function getImageFromApi(int $image_id, string $image_type)
     {
         // сделать запрос к autoxml на получение файла
-        $url = 'http://127.0.0.1:8000/api/image-service/image';
+        $url = $this->base_url . 'api/image-service/image';
         $data = [
             'image_id' => $image_id,
             'image_type' => $image_type,
