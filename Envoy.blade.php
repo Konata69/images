@@ -111,6 +111,15 @@
     @endif
 @endtask
 
+@task ('restart_queue')
+    echo '**************************************'
+    echo '*            restart queue           *'
+    echo '**************************************'
+
+    cd {{ $dir_current }}
+    php artisan queue:restart
+@endtask
+
 @macro('deploy')
     clone
     composer
@@ -119,4 +128,5 @@
     config_cache
     symlink
     remove_dir
+    restart_queue
 @endmacro
