@@ -20,4 +20,7 @@ return [
     // алгоритм хеширования файлов изображений
     'hash_algo' => env('IMAGE_HASH_ALGO', 'sha256'),
 
+    // куда отправлять результат обработки изображений
+    'target_url' => env('IMAGE_TARGET_URL', 'https://newautoxml.4px.tech/'),
+
 ];
