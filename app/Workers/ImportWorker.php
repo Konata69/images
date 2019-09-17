@@ -3,6 +3,8 @@
 namespace App\Workers;
 
 use App\DTO\ImportUpdateDTO;
+use App\Models\Image\ImageAuto;
+use App\Services\Image\FinderService;
 use Illuminate\Support\Collection;
 
 /**
@@ -21,14 +23,25 @@ class ImportWorker
     {
         //TODO реализовать
 
+        //есть два списка изображений: новые и текущие
+        //выбрать те изображения, которые догружаем (одинаковые ссылки, разные хеши либо новые ссылки)
+        //выбрать те изображения, которые удаляем (нужно ли?)
+        //загрузить изображения
+        //отдать инфу о новом списке изображений
+
+        // отбираем изображения для загрузки
         $to_load_url = $this->getImageUrlToLoad($import_update_dto->feed_url, $import_update_dto->auto_url);
-        $this->loadApi($item->auto, $to_load_url);
+
+        // в идеале нужно три списка: добавление, обновление, удаление
+
+        // грузим изображения в сервис, отдаем в проект
+        (ImageWorker::makeWithAutoService())->loadByUrl($to_load_url, $import_update_dto->card_id, $import_update_dto->auto_id);
     }
 
     public function getImageUrlToLoad($feed_url, $auto_url): array
     {
         //получить индивидуальные фото авто из сервиса (с хешами)
-        $auto_image_hash = $this->getLocalImage($auto_url);
+        $auto_image_hash = (new FinderService(new ImageAuto()))->byUrlLocal($auto_url);
 
         //получить хеши добавляемых изображений
         $feed_image_hash = $this->getFeedImageHash($feed_url);
@@ -40,21 +53,43 @@ class ImportWorker
         return $to_load_url;
     }
 
-    public function loadApi(Auto $auto, array $src)
+    public function getFeedImageHash(array $image = []): Collection
     {
-        $image_service = new Api();
+        $hash_algo = 'sha256';
+        $feed_image_hash = [];
 
-        $result = $image_service->import($src, $auto->card_id, $auto->id);
+        foreach ($image as $url) {
+            $feed_image_hash[] = [
+                'url' => $url,
+                'hash' => $this->getHashFile($hash_algo, $url),
+            ];
+        }
 
-        return $result;
+        return collect($feed_image_hash);
     }
 
-    public function getLocalImage(array $image = []): Collection
+    public function getDiffImageList(Collection $new_image_list, Collection $old_image_list): array
     {
-        $image_service = new Api();
-        $response = $image_service->byUrlAuto($image);
-        $local_image = collect($response['image'] ?? []);
+        foreach ($new_image_list as $new_image) {
+            $tmp_image = $old_image_list->firstWhere('hash', $new_image['url']);
 
-        return $local_image;
+            if (empty($tmp_image)) {
+                $to_load[] = $new_image;
+            }
+        }
+
+        return $to_load ?? [];
+    }
+
+    public function getHashFile($hash_algo, $url)
+    {
+        $arrContextOptions = [
+            "ssl" => [
+                "verify_peer" => false,
+                "verify_peer_name" => false,
+            ],
+        ];
+
+        return hash($hash_algo, file_get_contents($url, false, stream_context_create($arrContextOptions)));
     }
 }
