@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Models\Image;
+namespace App\Models\Image\Compare;
 
-class ImageCompare
+class Comparator
 {
     protected $old;
     protected $new;
