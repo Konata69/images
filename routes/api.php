@@ -25,7 +25,7 @@ Route::group(['middleware' => 'auth.basic'], function () {
             // добавить в очередь загрузку изображения через интерфейс (высокий приоритет)
             Route::post('/load', 'QueueController@load')->name('image-queue-load');
             // добавить в очередь загрузку изображения через импорт (обычный приоритет)
-            Route::post('/import', 'QueueController@loadImport')->name('image-queue-import');
+            Route::post('/import', 'QueueController@import')->name('image-queue-import');
             // добавить в очередь задачу на обновление изображений
             Route::post('/import/update', 'QueueController@importUpdate')->name('image-queue-import-update');
 
