@@ -28,16 +28,27 @@ class Comparator
         });
     }
 
+    /**
+     * Получить список изображения для обновления (одинаковые урлы, разные хеши)
+     *
+     * @return Collection
+     */
     public function getUpdateList(): Collection
     {
-        //TODO Дописать метод получения изображений для обновления
+        $result = new Collection();
 
-        return $this->new->diffUsing($this->old, function (Item $a, Item $b) {
-            if ($a->url === $b->url && $a->url === 'url2') {
-                $i = 1;
+        foreach ($this->new as $new) {
+            $old = $this->old->where('url', $new->url)->first();
+            if (empty($old)) {
+                continue;
             }
-            return $this->compare($a, $b);
-        });
+
+            if ($old->hash !== $new->hash) {
+                $result->add($new);
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -51,14 +62,6 @@ class Comparator
         return $this->old->diffUsing($this->new, function (Item $a, Item $b) {
             return $this->compareByUrl($a, $b);
         });
-    }
-
-    protected function compare(Item $a, Item $b) {
-        if ($a->url === $b->url) {
-            return ($a->hash === $b->hash) ? 0 : -1 ;
-        }
-
-        return 0;
     }
 
     protected function compareByUrl(Item $a, Item $b) {
