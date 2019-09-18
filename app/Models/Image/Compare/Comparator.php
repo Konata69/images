@@ -3,16 +3,74 @@
 namespace App\Models\Image\Compare;
 
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 
+/**
+ * Объект сравнения двух списков изображений
+ */
 class Comparator
 {
+    /**
+     * @var Collection
+     */
     protected $old;
+
+    /**
+     * @var Collection
+     */
     protected $new;
 
-    public function __construct($old, $new)
+    public function __construct(Collection $old, Collection $new)
     {
-        $this->old = collect($old);
-        $this->new = collect($new);
+        $this->guardCollectionType($old);
+        $this->guardCollectionType($new);
+
+        $this->old = $old;
+        $this->new = $new;
+    }
+
+    /**
+     * Создать
+     *
+     * @param array $old
+     * @param array $new
+     *
+     * @return static
+     */
+    public static function makeFromArray(array $old, array $new)
+    {
+        $old_col = static::makeSingleCollection($old);
+        $new_col = static::makeSingleCollection($new);
+
+        return new static($old_col, $new_col);
+    }
+
+    /**
+     * @param array $items
+     * @return Collection
+     */
+    protected static function makeSingleCollection(array $items): Collection
+    {
+        $col = new Collection();
+        foreach ($items as $item) {
+            $col->add(new Item($item['url'], $item['hash']));
+        }
+
+        return $col;
+    }
+
+    /**
+     * Проверить типы элементов коллекции
+     *
+     * @param Collection $collection
+     */
+    protected function guardCollectionType(Collection $collection): void
+    {
+        foreach ($collection as $item) {
+            if (!$item instanceof Item) {
+                throw new InvalidArgumentException('Element is not instance of Compare\Item');
+            }
+        }
     }
 
     /**
