@@ -156,6 +156,31 @@ class ImageWorker
     }
 
     /**
+     * Обновить существующее изображение по ссылке (например, из фида)
+     *
+     * @param array $url_list
+     * @param int $card_id
+     * @param int $auto_id
+     */
+    public function updateByUrl(array $url_list, int $card_id, int $auto_id)
+    {
+        // загрузить изображение
+        $path = [
+            'card_id' => $card_id,
+            'auto_id' => $auto_id,
+        ];
+        $path = $this->image_service->makePath($path);
+
+        // сохранить изображение в сервисе
+        //TODO Заменить на обновление существующего изображения
+        // Вместо списка ссылок передавать коллекцию объектов изображения
+        $data = $this->image_service->load($url_list, $path);
+
+        // отправить ссылку на изображение и auto_id
+        $this->sendServiceUrlList($data['image'], $auto_id);
+    }
+
+    /**
      * Дописать external_id в модели
      *
      * @param array $image_list

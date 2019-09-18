@@ -3,6 +3,7 @@
 namespace App\Workers;
 
 use App\DTO\ImportUpdateDTO;
+use App\Models\Image\Compare\Comparator;
 use App\Models\Image\ImageAuto;
 use App\Services\Image\FinderService;
 use Illuminate\Support\Collection;
@@ -25,32 +26,23 @@ class ImportWorker
 
         //есть два списка изображений: новые и текущие
         //выбрать те изображения, которые догружаем (одинаковые ссылки, разные хеши либо новые ссылки)
-        //выбрать те изображения, которые удаляем (нужно ли?)
         //загрузить изображения
         //отдать инфу о новом списке изображений
 
-        // отбираем изображения для загрузки
-        $to_load_url = $this->getImageUrlToLoad($import_update_dto->feed_url, $import_update_dto->auto_url);
+        // получить хеши изображений
+        $auto_image_hash = (new FinderService(new ImageAuto()))->byUrlLocal($import_update_dto->auto_url)->toArray();
+        $feed_image_hash = $this->getFeedImageHash($import_update_dto->feed_url)->toArray();
 
-        // в идеале нужно три списка: добавление, обновление, удаление
+        //TODO Переписать компаратор на использование моделей изображений
+        $comparator = Comparator::makeFromArray($auto_image_hash, $feed_image_hash);
 
-        // грузим изображения в сервис, отдаем в проект
-        (ImageWorker::makeWithAutoService())->loadByUrl($to_load_url, $import_update_dto->card_id, $import_update_dto->auto_id);
-    }
+        $add = $comparator->getAddList();
+        $update = $comparator->getUpdateList();
 
-    public function getImageUrlToLoad($feed_url, $auto_url): array
-    {
-        //получить индивидуальные фото авто из сервиса (с хешами)
-        $auto_image_hash = (new FinderService(new ImageAuto()))->byUrlLocal($auto_url);
+        // loadByUrl - загружает новые изображения, но не обновляет старые при смене хеша
 
-        //получить хеши добавляемых изображений
-        $feed_image_hash = $this->getFeedImageHash($feed_url);
-
-        //выделить список изображений для загрузки
-        $to_load = $this->getDiffImageList($feed_image_hash, $auto_image_hash);
-        $to_load_url = collect($to_load)->pluck('url')->toArray();
-
-        return $to_load_url;
+        // грузим изображения из фида по ссылке в сервис, отдаем в проект
+        (ImageWorker::makeWithAutoService())->loadByUrl($url_to_load, $import_update_dto->card_id, $import_update_dto->auto_id);
     }
 
     public function getFeedImageHash(array $image = []): Collection
