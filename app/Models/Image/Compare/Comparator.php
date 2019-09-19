@@ -2,6 +2,8 @@
 
 namespace App\Models\Image\Compare;
 
+use App\Models\Image\BaseImage;
+use App\Models\Image\ImageAuto;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
@@ -53,7 +55,10 @@ class Comparator
     {
         $col = new Collection();
         foreach ($items as $item) {
-            $col->add(new Item($item['url'], $item['hash']));
+            $col->add(new ImageAuto([
+                'url' => $item['url'],
+                'hash' => $item['hash'],
+            ]));
         }
 
         return $col;
@@ -67,8 +72,8 @@ class Comparator
     protected function guardCollectionType(Collection $collection): void
     {
         foreach ($collection as $item) {
-            if (!$item instanceof Item) {
-                throw new InvalidArgumentException('Element is not instance of Compare\Item');
+            if (!$item instanceof BaseImage) {
+                throw new InvalidArgumentException('Element is not instance of ' . BaseImage::class);
             }
         }
     }
@@ -81,7 +86,7 @@ class Comparator
      */
     public function getAddList(): Collection
     {
-        return $this->new->diffUsing($this->old, function (Item $a, Item $b) {
+        return $this->new->diffUsing($this->old, function (BaseImage $a, BaseImage $b) {
             return $this->compareByUrl($a, $b);
         });
     }
@@ -117,12 +122,12 @@ class Comparator
      */
     public function getDeleteList(): Collection
     {
-        return $this->old->diffUsing($this->new, function (Item $a, Item $b) {
+        return $this->old->diffUsing($this->new, function (BaseImage $a, BaseImage $b) {
             return $this->compareByUrl($a, $b);
         });
     }
 
-    protected function compareByUrl(Item $a, Item $b) {
+    protected function compareByUrl(BaseImage $a, BaseImage $b) {
         return ($a->url === $b->url) ? 0 : -1;
     }
 }
