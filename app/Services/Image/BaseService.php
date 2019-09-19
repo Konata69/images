@@ -5,6 +5,7 @@ namespace App\Services\Image;
 use App\Models\Image\BaseImage;
 use Exception;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Jenssegers\ImageHash\ImageHash;
 use Throwable;
 
@@ -121,6 +122,24 @@ abstract class BaseService
             } catch (Throwable $e) {
                 $data['error'][] = $this->errorItem($url, $e->getMessage());
             }
+        }
+
+        return $data;
+    }
+
+    public function update(Collection $image_list, string $path)
+    {
+        // ответ с результатами обработки ссылок на изображения
+        $data = [
+            'image' => [],
+        ];
+
+        // обработать список ссылок, пройтись по ссылкам и достать изображение
+        foreach ($image_list as $image) {
+            $image = $this->handleUrlImage($image, $path);
+            $this->createThumb($image);
+            $image->setServiceUrl();
+            $data['image'][] = $image;
         }
 
         return $data;

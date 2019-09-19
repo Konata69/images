@@ -22,27 +22,19 @@ class ImportWorker
      */
     public function update(ImportUpdateDTO $import_update_dto)
     {
-        //TODO реализовать
-
-        //есть два списка изображений: новые и текущие
-        //выбрать те изображения, которые догружаем (одинаковые ссылки, разные хеши либо новые ссылки)
-        //загрузить изображения
-        //отдать инфу о новом списке изображений
-
         // получить хеши изображений
         $auto_image_hash = (new FinderService(new ImageAuto()))->byUrlLocal($import_update_dto->auto_url)->toArray();
         $feed_image_hash = $this->getFeedImageHash($import_update_dto->feed_url)->toArray();
 
-        //TODO Переписать компаратор на использование моделей изображений
         $comparator = Comparator::makeFromArray($auto_image_hash, $feed_image_hash);
 
-        $add = $comparator->getAddList();
+        $add = $comparator->getAddList()->pluck('url')->toArray();
         $update = $comparator->getUpdateList();
 
-        // loadByUrl - загружает новые изображения, но не обновляет старые при смене хеша
-
         // грузим изображения из фида по ссылке в сервис, отдаем в проект
-        (ImageWorker::makeWithAutoService())->loadByUrl($url_to_load, $import_update_dto->card_id, $import_update_dto->auto_id);
+        $image_worker = ImageWorker::makeWithAutoService();
+        $image_worker->loadByUrl($add, $import_update_dto->card_id, $import_update_dto->auto_id);
+        $image_worker->updateByUrl($update, $import_update_dto->card_id, $import_update_dto->auto_id);
     }
 
     public function getFeedImageHash(array $image = []): Collection

@@ -8,6 +8,7 @@ use App\Services\BaseApiClient;
 use App\Services\Image\AutoService;
 use App\Services\Image\BaseService;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 /**
@@ -158,11 +159,11 @@ class ImageWorker
     /**
      * Обновить существующее изображение по ссылке (например, из фида)
      *
-     * @param array $url_list
+     * @param Collection $image
      * @param int $card_id
      * @param int $auto_id
      */
-    public function updateByUrl(array $url_list, int $card_id, int $auto_id)
+    public function updateByUrl(Collection $image, int $card_id, int $auto_id)
     {
         // загрузить изображение
         $path = [
@@ -174,7 +175,8 @@ class ImageWorker
         // сохранить изображение в сервисе
         //TODO Заменить на обновление существующего изображения
         // Вместо списка ссылок передавать коллекцию объектов изображения
-        $data = $this->image_service->load($url_list, $path);
+//        $data = $this->image_service->load($image, $path);
+        $data = $this->image_service->update($image, $path);
 
         // отправить ссылку на изображение и auto_id
         $this->sendServiceUrlList($data['image'], $auto_id);
