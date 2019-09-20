@@ -13,10 +13,6 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::get('/image/test-object', function () {
-    return response('ok', 200);
-});
-
 //TODO Убрать тестовый роут
 //Route::post('/image/queue/test', 'Image\QueueController@test')->name('image-queue-test');
 //Route::post('/image/queue/test-migrate', 'Image\QueueController@testMigrate')->name('image-queue-test-migrate');
