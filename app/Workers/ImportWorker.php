@@ -3,9 +3,9 @@
 namespace App\Workers;
 
 use App\DTO\ImportUpdateDTO;
+use App\Models\Image\BaseImage;
 use App\Models\Image\Compare\Comparator;
 use App\Models\Image\ImageAuto;
-use App\Services\Image\FinderService;
 use Illuminate\Support\Collection;
 
 /**
@@ -23,10 +23,10 @@ class ImportWorker
     public function update(ImportUpdateDTO $import_update_dto)
     {
         // получить хеши изображений
-        $auto_image_hash = (new FinderService(new ImageAuto()))->byUrlLocal($import_update_dto->auto_url)->toArray();
-        $feed_image_hash = $this->getFeedImageHash($import_update_dto->feed_url)->toArray();
+        $auto_image_hash = $this->getLocalImage($import_update_dto->auto_url);
+        $feed_image_hash = $this->getFeedImageHash($import_update_dto->feed_url);
 
-        $comparator = Comparator::makeFromArray($auto_image_hash, $feed_image_hash);
+        $comparator = new Comparator($auto_image_hash, $feed_image_hash);
 
         $add = $comparator->getAddList()->pluck('url')->toArray();
         $update = $comparator->getUpdateList();
@@ -37,35 +37,55 @@ class ImportWorker
         $image_worker->updateByUrl($update, $import_update_dto->card_id, $import_update_dto->auto_id);
     }
 
+    /**
+     * Получить локальные модели изображений по external_id
+     *
+     * @param array $auto_url = [["id" => 1, "url" => 'url']]
+     *
+     * @return Collection<BaseImage>
+     */
+    protected function getLocalImage(array $auto_url): Collection
+    {
+        $auto_url = collect($auto_url);
+        $external_id_list = $auto_url->pluck('id')->toArray();
+
+        $result = ImageAuto::whereIn('external_id', $external_id_list)->get();
+
+        return $result;
+    }
+
+    /**
+     * Получить коллекцию изображений, созданных на основе урлов из фида
+     *
+     * @param array $image
+     *
+     * @return Collection
+     */
     public function getFeedImageHash(array $image = []): Collection
     {
         $hash_algo = 'sha256';
-        $feed_image_hash = [];
+        $feed_image_hash = new Collection();
 
         foreach ($image as $url) {
-            $feed_image_hash[] = [
+            $item = new ImageAuto([
                 'url' => $url,
                 'hash' => $this->getHashFile($hash_algo, $url),
-            ];
+            ]);
+            $feed_image_hash->add($item);
         }
 
-        return collect($feed_image_hash);
+        return $feed_image_hash;
     }
 
-    public function getDiffImageList(Collection $new_image_list, Collection $old_image_list): array
-    {
-        foreach ($new_image_list as $new_image) {
-            $tmp_image = $old_image_list->firstWhere('hash', $new_image['url']);
-
-            if (empty($tmp_image)) {
-                $to_load[] = $new_image;
-            }
-        }
-
-        return $to_load ?? [];
-    }
-
-    public function getHashFile($hash_algo, $url)
+    /**
+     * Получить хеш файла по урлу
+     *
+     * @param string $hash_algo
+     * @param string $url
+     *
+     * @return string
+     */
+    public function getHashFile(string $hash_algo, string $url): string
     {
         $arrContextOptions = [
             "ssl" => [
