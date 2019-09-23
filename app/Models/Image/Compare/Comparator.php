@@ -107,7 +107,8 @@ class Comparator
             }
 
             if ($old->hash !== $new->hash) {
-                $result->add($new);
+                $old->hash = $new->hash;
+                $result->add($old);
             }
         }
 

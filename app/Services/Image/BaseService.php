@@ -127,22 +127,31 @@ abstract class BaseService
         return $data;
     }
 
-    public function update(Collection $image_list, string $path)
+    /**
+     * Обновить изображения
+     *
+     * @param Collection $image_list
+     * @param string $path
+     *
+     * @return Collection
+     */
+    public function update(Collection $image_list, string $path): Collection
     {
-        // ответ с результатами обработки ссылок на изображения
-        $data = [
-            'image' => [],
-        ];
+        $image_list_new = new Collection();
 
         // обработать список ссылок, пройтись по ссылкам и достать изображение
         foreach ($image_list as $image) {
-            $image = $this->handleUrlImage($image, $path);
-            $this->createThumb($image);
+            /** @var BaseImage $image */
+            $image->image_hash = $this->hasher->hash($image->url)->toHex();
+            $image->src = $this->file->prepareAndSavePhoto($image->url, $path, true);
+            $image->thumb = $this->file->makeThumb($image->src);
+            $image->save();
+
             $image->setServiceUrl();
-            $data['image'][] = $image;
+            $image_list_new->add($image);
         }
 
-        return $data;
+        return $image_list_new;
     }
 
     /**

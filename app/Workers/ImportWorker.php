@@ -33,8 +33,12 @@ class ImportWorker
 
         // грузим изображения из фида по ссылке в сервис, отдаем в проект
         $image_worker = ImageWorker::makeWithAutoService();
-        $image_worker->loadByUrl($add, $import_update_dto->card_id, $import_update_dto->auto_id);
-        $image_worker->updateByUrl($update, $import_update_dto->card_id, $import_update_dto->auto_id);
+        if (!empty($add)) {
+            $image_worker->loadByUrl($add, $import_update_dto->card_id, $import_update_dto->auto_id);
+        }
+        if (!empty($update->count())) {
+            $image_worker->updateByUrl($update, $import_update_dto->card_id, $import_update_dto->auto_id);
+        }
     }
 
     /**

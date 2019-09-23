@@ -173,12 +173,9 @@ class ImageWorker
         $path = $this->image_service->makePath($path);
 
         // сохранить изображение в сервисе
-        //TODO Заменить на обновление существующего изображения
-        // Вместо списка ссылок передавать коллекцию объектов изображения
-//        $data = $this->image_service->load($image, $path);
         $data = $this->image_service->update($image, $path);
 
-        // отправить ссылку на изображение и auto_id
+        // отправить обновленные данные об изображениях
         $this->sendServiceUrlList($data['image'], $auto_id);
     }
 
