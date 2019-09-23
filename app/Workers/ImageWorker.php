@@ -176,7 +176,7 @@ class ImageWorker
         $data = $this->image_service->update($image, $path);
 
         // отправить обновленные данные об изображениях
-        $this->sendServiceUrlList($data['image'], $auto_id);
+        $this->sendServiceUrlList($data->toArray(), $auto_id);
     }
 
     /**
