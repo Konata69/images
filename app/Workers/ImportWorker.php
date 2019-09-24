@@ -27,18 +27,26 @@ class ImportWorker
         $feed_image_hash = $this->getFeedImageHash($import_update_dto->feed_url);
 
         $comparator = new Comparator($auto_image_hash, $feed_image_hash);
+        $image_worker = ImageWorker::makeWithAutoService();
 
-        $add = $comparator->getAddList()->pluck('url')->toArray();
-        $update = $comparator->getUpdateList();
+        $new_list = clone $feed_image_hash;
+
+//        $add = $comparator->getAddList()->pluck('url')->toArray();
+//        $update = $comparator->getUpdateList();
 
         // грузим изображения из фида по ссылке в сервис, отдаем в проект
-        $image_worker = ImageWorker::makeWithAutoService();
-        if (!empty($add)) {
-            $image_worker->loadByUrl($add, $import_update_dto->card_id, $import_update_dto->auto_id);
-        }
-        if (!empty($update->count())) {
-            $image_worker->updateByUrl($update, $import_update_dto->card_id, $import_update_dto->auto_id);
-        }
+//        if (!empty($add)) {
+//            $image_worker->loadByUrl($add, $import_update_dto->card_id, $import_update_dto->auto_id);
+//        }
+//        if (!empty($update->count())) {
+//            $image_worker->updateByUrl($update, $import_update_dto->card_id, $import_update_dto->auto_id);
+//        }
+
+        // отправить обновленный список изображений
+        $result = $image_worker->sendServiceUrlList($new_list);
+
+        // обновить external_id у изображений
+        $image_worker->addExternalId($new_list, $result);
     }
 
     /**
@@ -48,7 +56,7 @@ class ImportWorker
      *
      * @return Collection<BaseImage>
      */
-    protected function getLocalImage(array $auto_url): Collection
+    public function getLocalImage(array $auto_url): Collection
     {
         $auto_url = collect($auto_url);
         $external_id_list = $auto_url->pluck('id')->toArray();

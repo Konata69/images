@@ -158,12 +158,15 @@ class ImageWorker
 
     /**
      * Обновить существующее изображение по ссылке (например, из фида)
+     * и вернуть коллекцию обновленных изображений
      *
      * @param Collection $image
      * @param int $card_id
      * @param int $auto_id
+     *
+     * @return Collection
      */
-    public function updateByUrl(Collection $image, int $card_id, int $auto_id)
+    public function updateByUrl(Collection $image, int $card_id, int $auto_id): Collection
     {
         // загрузить изображение
         $path = [
@@ -175,8 +178,7 @@ class ImageWorker
         // сохранить изображение в сервисе
         $data = $this->image_service->update($image, $path);
 
-        // отправить обновленные данные об изображениях
-        $this->sendServiceUrlList($data->toArray(), $auto_id);
+        return $data;
     }
 
     /**
@@ -185,7 +187,7 @@ class ImageWorker
      * @param array $image_list
      * @param $response
      */
-    protected function addExternalId($image_list, $response)
+    public function addExternalId($image_list, $response)
     {
         $image_list_external = collect($response['data']['image']);
         foreach ($image_list as $image) {
@@ -237,7 +239,7 @@ class ImageWorker
      *
      * @return array
      */
-    protected function sendServiceUrlList(array $image_list, int $auto_id): array
+    public function sendServiceUrlList(array $image_list, int $auto_id): array
     {
         // сделать запрос к autoxml на получение файла
         $url = $this->base_url . 'api/image-service/result-import';

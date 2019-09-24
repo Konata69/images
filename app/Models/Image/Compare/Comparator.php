@@ -79,6 +79,24 @@ class Comparator
     }
 
     /**
+     * Получить новый список изображений
+     *
+     * @return Collection
+     */
+    public function getNewList(): Collection
+    {
+        $new_list = new Collection();
+
+        // есть два списка, старый и текущий
+        // нужно составить новый список, который содержит все старые, с обновленными новыми
+
+        $this->old;
+        $this->new;
+
+        return $new_list;
+    }
+
+    /**
      * Получить список изображения для добавления
      * Сравниваем по урлам
      *
