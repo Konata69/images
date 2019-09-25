@@ -50,6 +50,23 @@ class ImportWorker
     }
 
     /**
+     * Связать модели, полученные из фида с моделями из бд
+     *
+     * @param Collection $feed_image_hash
+     * @param Collection $auto_image_hash
+     */
+    public function link(Collection $feed_image_hash, Collection $auto_image_hash)
+    {
+        $feed_image_hash->each(function (BaseImage $feed_item) use ($auto_image_hash) {
+            /** @var BaseImage $auto_item */
+
+            //TODO Помимо линковки по id, перекинуть все аргументы из $auto_item в $feed_item
+            $auto_item = $auto_image_hash->where('hash', $feed_item->hash)->first();
+            $feed_item->id = $auto_item->id;
+        });
+    }
+
+    /**
      * Получить локальные модели изображений по external_id
      *
      * @param array $auto_url = [["id" => 1, "url" => 'url']]
