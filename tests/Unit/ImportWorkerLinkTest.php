@@ -30,9 +30,9 @@ class ImportWorkerLinkTest extends TestCase
 
         // модели, которые лежат в бд сервиса
         $this->auto_image_hash = new Collection();
-        $auto_item1 = new ImageAuto(['url' => 'url1', 'hash' => 'hash1']);
+        $auto_item1 = new ImageAuto(['url' => 'url1', 'hash' => 'hash1', 'image_hash' => 'image_hash1']);
         $auto_item1->id = 1;
-        $auto_item2 = new ImageAuto(['url' => 'url2', 'hash' => 'hash1']);
+        $auto_item2 = new ImageAuto(['url' => 'url2', 'hash' => 'hash1', 'image_hash' => 'image_hash2']);
         $auto_item2->id = 2;
         $this->auto_image_hash->add($auto_item1);
         $this->auto_image_hash->add($auto_item2);
@@ -57,12 +57,13 @@ class ImportWorkerLinkTest extends TestCase
         $this->assertNotEquals($auto_id, $feed_id);
 
         // связывает модели из фида с моделями из бд
-        $this->import_worker->link($this->feed_image_hash, $this->auto_image_hash);
+        $this->feed_image_hash = $this->import_worker->link($this->feed_image_hash, $this->auto_image_hash);
 
-        $feed_id = $this->feed_image_hash->first()->id;
-        $auto_id = $this->auto_image_hash->first()->id;
+        $feed_first = $this->feed_image_hash->first();
+        $auto_first = $this->auto_image_hash->first();
 
-        $this->assertEquals(1, $auto_id);
-        $this->assertEquals($feed_id, $auto_id);
+        $this->assertEquals(1, $auto_first->id);
+        $this->assertEquals($feed_first->id, $auto_first->id);
+        $this->assertEquals('image_hash1', $feed_first->image_hash);
     }
 }

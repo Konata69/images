@@ -54,16 +54,20 @@ class ImportWorker
      *
      * @param Collection $feed_image_hash
      * @param Collection $auto_image_hash
+     *
+     * @return Collection
      */
-    public function link(Collection $feed_image_hash, Collection $auto_image_hash)
+    public function link(Collection $feed_image_hash, Collection $auto_image_hash): Collection
     {
-        $feed_image_hash->each(function (BaseImage $feed_item) use ($auto_image_hash) {
+        $feed_image_hash = $feed_image_hash->map(function (BaseImage $feed_item) use ($auto_image_hash) {
             /** @var BaseImage $auto_item */
-
-            //TODO Помимо линковки по id, перекинуть все аргументы из $auto_item в $feed_item
             $auto_item = $auto_image_hash->where('hash', $feed_item->hash)->first();
-            $feed_item->id = $auto_item->id;
+            $auto_item->hash = $feed_item->hash;
+
+            return $auto_item;
         });
+
+        return $feed_image_hash;
     }
 
     /**
