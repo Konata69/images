@@ -29,7 +29,10 @@ class ImportWorker
         $comparator = new Comparator($auto_image_hash, $feed_image_hash);
         $image_worker = ImageWorker::makeWithAutoService();
 
-        $new_list = clone $feed_image_hash;
+        // связываем изображения из фида с существующими в бд
+        $feed_image_hash = $this->link($feed_image_hash, $auto_image_hash);
+
+        $feed_image_hash = $this->add($feed_image_hash, $auto_image_hash);
 
 //        $add = $comparator->getAddList()->pluck('url')->toArray();
 //        $update = $comparator->getUpdateList();
@@ -62,12 +65,38 @@ class ImportWorker
         $feed_image_hash = $feed_image_hash->map(function (BaseImage $feed_item) use ($auto_image_hash) {
             /** @var BaseImage $auto_item */
             $auto_item = $auto_image_hash->where('hash', $feed_item->hash)->first();
+
+            // если не нашли локальное изображение - возвращаем исходное изображение (из фида)
+            if (empty($auto_item)) {
+                return $feed_item;
+            }
+
             $auto_item->hash = $feed_item->hash;
 
             return $auto_item;
         });
 
         return $feed_image_hash;
+    }
+
+    public function add(Collection $feed_image_hash, Collection $auto_image_hash): Collection
+    {
+        $image_worker = ImageWorker::makeWithAutoService();
+
+        $feed_image_hash = $feed_image_hash->map(function (BaseImage $feed_item) use ($auto_image_hash, $image_worker) {
+            /** @var BaseImage $auto_item */
+            $auto_item = $auto_image_hash->where('hash', $feed_item->hash)->first();
+
+            // если не нашли локальное изображение - возвращаем исходное изображение (из фида)
+            if (!empty($auto_item)) {
+                return $feed_item;
+            }
+
+            // загрузить и сохранить изображение в бд
+            $image_worker->getImageService()->loadSingle($feed_item->url, $path);
+        });
+
+        return  $feed_image_hash;
     }
 
     /**

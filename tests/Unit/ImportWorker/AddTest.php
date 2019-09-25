@@ -1,13 +1,13 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\ImportWorker;
 
 use App\Models\Image\ImageAuto;
 use App\Workers\ImportWorker;
 use Illuminate\Support\Collection;
 use Tests\TestCase;
 
-class ImportWorkerLinkTest extends TestCase
+class AddTest extends TestCase
 {
     /**
      * @var ImportWorker
@@ -40,30 +40,22 @@ class ImportWorkerLinkTest extends TestCase
         // новые модели (не из бд)
         $this->feed_image_hash = new Collection();
         $feed_item1 = new ImageAuto(['url' => 'url1', 'hash' => 'hash1']);
-        $feed_item2 = new ImageAuto(['url' => 'url2', 'hash' => 'hash1']);
+        $feed_item2 = new ImageAuto(['url' => 'url2', 'hash' => 'hash2']);
+        $feed_item3 = new ImageAuto(['url' => 'url3', 'hash' => 'hash3']);
         $this->feed_image_hash->add($feed_item1);
         $this->feed_image_hash->add($feed_item2);
+        $this->feed_image_hash->add($feed_item3);
 
         $this->import_worker = new ImportWorker();
     }
 
-    public function testLinkCollection()
+    public function testAdd()
     {
-        $feed_id = $this->feed_image_hash->first()->id;
-        $auto_id = $this->auto_image_hash->first()->id;
+        // догрузить недостающие изображения и сохранить их в бд
+        $this->feed_image_hash = $this->import_worker->add($this->feed_image_hash, $this->auto_image_hash);
 
-        $this->assertEquals(null, $feed_id);
-        $this->assertEquals(1, $auto_id);
-        $this->assertNotEquals($auto_id, $feed_id);
+        $feed_last = $this->feed_image_hash->last();
 
-        // связывает модели из фида с моделями из бд
-        $this->feed_image_hash = $this->import_worker->link($this->feed_image_hash, $this->auto_image_hash);
-
-        $feed_first = $this->feed_image_hash->first();
-        $auto_first = $this->auto_image_hash->first();
-
-        $this->assertEquals(1, $auto_first->id);
-        $this->assertEquals($feed_first->id, $auto_first->id);
-        $this->assertEquals('image_hash1', $feed_first->image_hash);
+        $this->assertEquals(3, $feed_last->id);
     }
 }
