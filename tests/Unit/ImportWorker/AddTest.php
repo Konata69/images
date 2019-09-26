@@ -24,9 +24,16 @@ class AddTest extends TestCase
      */
     protected $feed_image_hash;
 
+    /**
+     * @var string
+     */
+    protected $path;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->path = '/image/auto/1/123';
 
         // модели, которые лежат в бд сервиса
         $this->auto_image_hash = new Collection();
@@ -52,7 +59,7 @@ class AddTest extends TestCase
     public function testAdd()
     {
         // догрузить недостающие изображения и сохранить их в бд
-        $this->feed_image_hash = $this->import_worker->add($this->feed_image_hash, $this->auto_image_hash);
+        $this->feed_image_hash = $this->import_worker->add($this->feed_image_hash, $this->auto_image_hash, $this->path);
 
         $feed_last = $this->feed_image_hash->last();
 

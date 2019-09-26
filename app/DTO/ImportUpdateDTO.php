@@ -44,4 +44,19 @@ class ImportUpdateDTO
         $this->auto_id = $auto_id;
         $this->import_id = $import_id;
     }
+
+    /**
+     * Получить параметры пути
+     *
+     * @return array
+     */
+    public function getPathParams(): array
+    {
+        $path = [
+            'card_id' => $this->card_id,
+            'auto_id' => $this->auto_id,
+        ];
+
+        return $path;
+    }
 }

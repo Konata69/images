@@ -13,7 +13,22 @@ use Illuminate\Support\Collection;
  */
 class ImportWorker
 {
-    //TODO Адаптировать код
+    /**
+     * @var ImageWorker
+     */
+    protected $image_worker;
+
+    /**
+     * @param ImageWorker|null $image_worker
+     */
+    public function __construct(?ImageWorker $image_worker = null)
+    {
+        if ($image_worker instanceof ImageWorker) {
+            $this->image_worker = $image_worker;
+        } else {
+            $this->image_worker = ImageWorker::makeWithAutoService();
+        }
+    }
 
     /**
      * Обновить изображения авто
@@ -27,29 +42,19 @@ class ImportWorker
         $feed_image_hash = $this->getFeedImageHash($import_update_dto->feed_url);
 
         $comparator = new Comparator($auto_image_hash, $feed_image_hash);
-        $image_worker = ImageWorker::makeWithAutoService();
+
+        $path = $this->image_worker->getImageService()->makePath($import_update_dto->getPathParams());
 
         // связываем изображения из фида с существующими в бд
         $feed_image_hash = $this->link($feed_image_hash, $auto_image_hash);
 
-        $feed_image_hash = $this->add($feed_image_hash, $auto_image_hash);
-
-//        $add = $comparator->getAddList()->pluck('url')->toArray();
-//        $update = $comparator->getUpdateList();
-
-        // грузим изображения из фида по ссылке в сервис, отдаем в проект
-//        if (!empty($add)) {
-//            $image_worker->loadByUrl($add, $import_update_dto->card_id, $import_update_dto->auto_id);
-//        }
-//        if (!empty($update->count())) {
-//            $image_worker->updateByUrl($update, $import_update_dto->card_id, $import_update_dto->auto_id);
-//        }
+        $feed_image_hash = $this->add($feed_image_hash, $auto_image_hash, $path);
 
         // отправить обновленный список изображений
-        $result = $image_worker->sendServiceUrlList($new_list);
+        $result = $this->image_worker->sendServiceUrlList($new_list);
 
         // обновить external_id у изображений
-        $image_worker->addExternalId($new_list, $result);
+        $this->image_worker->addExternalId($new_list, $result);
     }
 
     /**
@@ -79,11 +84,9 @@ class ImportWorker
         return $feed_image_hash;
     }
 
-    public function add(Collection $feed_image_hash, Collection $auto_image_hash): Collection
+    public function add(Collection $feed_image_hash, Collection $auto_image_hash, string $path): Collection
     {
-        $image_worker = ImageWorker::makeWithAutoService();
-
-        $feed_image_hash = $feed_image_hash->map(function (BaseImage $feed_item) use ($auto_image_hash, $image_worker) {
+        $feed_image_hash = $feed_image_hash->map(function (BaseImage $feed_item) use ($auto_image_hash, $path) {
             /** @var BaseImage $auto_item */
             $auto_item = $auto_image_hash->where('hash', $feed_item->hash)->first();
 
@@ -93,7 +96,9 @@ class ImportWorker
             }
 
             // загрузить и сохранить изображение в бд
-            $image_worker->getImageService()->loadSingle($feed_item->url, $path);
+            $new_image = $this->image_worker->getImageService()->loadSingle($feed_item->url, $path);
+
+            return $new_image;
         });
 
         return  $feed_image_hash;
