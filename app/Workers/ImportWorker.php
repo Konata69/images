@@ -47,14 +47,16 @@ class ImportWorker
 
         // связываем изображения из фида с существующими в бд
         $feed_image_hash = $this->link($feed_image_hash, $auto_image_hash);
-
+        // догружаем недостающие изображения
         $feed_image_hash = $this->add($feed_image_hash, $auto_image_hash, $path);
+        // удаляем лишние изображения
+        $feed_image_hash = $this->delete($feed_image_hash, $auto_image_hash);
 
         // отправить обновленный список изображений
-        $result = $this->image_worker->sendServiceUrlList($new_list);
+        $result = $this->image_worker->sendServiceUrlList($feed_image_hash, $import_update_dto->auto_id);
 
         // обновить external_id у изображений
-        $this->image_worker->addExternalId($new_list, $result);
+        $this->image_worker->addExternalId($feed_image_hash, $result);
     }
 
     /**
@@ -84,13 +86,22 @@ class ImportWorker
         return $feed_image_hash;
     }
 
+    /**
+     * Догрузить недостающие изображения
+     *
+     * @param Collection $feed_image_hash
+     * @param Collection $auto_image_hash
+     * @param string $path
+     *
+     * @return Collection
+     */
     public function add(Collection $feed_image_hash, Collection $auto_image_hash, string $path): Collection
     {
         $feed_image_hash = $feed_image_hash->map(function (BaseImage $feed_item) use ($auto_image_hash, $path) {
             /** @var BaseImage $auto_item */
             $auto_item = $auto_image_hash->where('hash', $feed_item->hash)->first();
 
-            // если не нашли локальное изображение - возвращаем исходное изображение (из фида)
+            // если нашли локальное изображение - возвращаем исходное изображение (из фида)
             if (!empty($auto_item)) {
                 return $feed_item;
             }
@@ -102,6 +113,35 @@ class ImportWorker
         });
 
         return  $feed_image_hash;
+    }
+
+    /**
+     * Удалить лишние изображения (запись в бд и файлы)
+     *
+     * @param Collection $feed_image_hash
+     * @param Collection $auto_image_hash
+     *
+     * @return Collection
+     */
+    public function delete(Collection $feed_image_hash, Collection $auto_image_hash): Collection
+    {
+        $auto_image_hash = $auto_image_hash->filter(function (BaseImage $auto_item) use ($feed_image_hash) {
+            /** @var BaseImage $auto_item */
+            $feed_item = $feed_image_hash->where('hash', $auto_item->hash)->first();
+
+            // если нашли локальное изображение - оставляем элемент
+            if (!empty($feed_item)) {
+                return true;
+            }
+
+            // удалить файлы изображения и запись в бд
+            $this->image_worker->getImageService()->removeByLocalId($auto_item->id);
+
+            // удалить элемент из коллекции
+            return false;
+        });
+
+        return  $auto_image_hash;
     }
 
     /**

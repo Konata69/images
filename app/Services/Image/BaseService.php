@@ -259,6 +259,26 @@ abstract class BaseService
     }
 
     /**
+     * Удалить запись изображения в бд и файлы по локальному id
+     *
+     * @param int $id
+     */
+    public function removeByLocalId(int $id)
+    {
+        $image = $this->model->newQuery()->find($id);
+        if(!empty($image)) {
+            FileService::removeFile($image->src);
+            FileService::removeFile($image->thumb);
+
+            try {
+                $image->delete();
+            } catch (Exception $e) {
+                //TODO записать в лог
+            }
+        }
+    }
+
+    /**
      * Обработать изображение по ссылке, скачать, если это возможно
      *
      * @param string $url
