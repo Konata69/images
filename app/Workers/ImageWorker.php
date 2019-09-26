@@ -52,6 +52,11 @@ class ImageWorker
         return $this->image_service;
     }
 
+    public function setImageService(BaseService $service)
+    {
+        $this->image_service = $service;
+    }
+
     /**
      * Обработать изображение, если оно не создано во внешнем проекте
      *

@@ -2,9 +2,13 @@
 
 namespace Tests\Unit\ImportWorker;
 
+use App\Models\Image\BaseImage;
 use App\Models\Image\ImageAuto;
+use App\Services\Image\AutoService;
+use App\Workers\ImageWorker;
 use App\Workers\ImportWorker;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Tests\TestCase;
 
 class AddTest extends TestCase
@@ -53,7 +57,13 @@ class AddTest extends TestCase
         $this->feed_image_hash->add($feed_item2);
         $this->feed_image_hash->add($feed_item3);
 
-        $this->import_worker = new ImportWorker();
+        $auto_service = App::make(FakeAutoService::class);
+
+        $image_worker = ImageWorker::makeWithAutoService();
+        $image_worker->setImageService($auto_service);
+
+        $this->import_worker = new ImportWorker($image_worker);
+
     }
 
     public function testAdd()
@@ -64,5 +74,20 @@ class AddTest extends TestCase
         $feed_last = $this->feed_image_hash->last();
 
         $this->assertEquals(3, $feed_last->id);
+        $this->assertEquals('/image/auto/1/123/3.jpg', $feed_last->src);
+    }
+}
+
+class FakeAutoService extends AutoService
+{
+    public function loadSingle(string $url, string $path): BaseImage
+    {
+        $image = $this->model->newInstance();
+        $image->id = 3;
+        $image->image_hash = 'image_hash3';
+        $image->src = $path . '/3.jpg';
+        $image->thumb = $path . '/thumb/3.jpg';
+
+        return $image;
     }
 }
