@@ -57,13 +57,21 @@ class AddTest extends TestCase
         $this->feed_image_hash->add($feed_item2);
         $this->feed_image_hash->add($feed_item3);
 
-        $auto_service = App::make(FakeAutoService::class);
+        $stub = $this->createMock(AutoService::class);
+
+        $image = new ImageAuto([
+            'image_hash' => 'image_hash3',
+            'src' => '/image/auto/1/123/3.jpg',
+        ]);
+        $image->id = 3;
+
+        $stub->method('loadSingle')
+            ->willReturn($image);
 
         $image_worker = ImageWorker::makeWithAutoService();
-        $image_worker->setImageService($auto_service);
+        $image_worker->setImageService($stub);
 
         $this->import_worker = new ImportWorker($image_worker);
-
     }
 
     public function testAdd()
@@ -75,19 +83,5 @@ class AddTest extends TestCase
 
         $this->assertEquals(3, $feed_last->id);
         $this->assertEquals('/image/auto/1/123/3.jpg', $feed_last->src);
-    }
-}
-
-class FakeAutoService extends AutoService
-{
-    public function loadSingle(string $url, string $path): BaseImage
-    {
-        $image = $this->model->newInstance();
-        $image->id = 3;
-        $image->image_hash = 'image_hash3';
-        $image->src = $path . '/3.jpg';
-        $image->thumb = $path . '/thumb/3.jpg';
-
-        return $image;
     }
 }
