@@ -41,8 +41,6 @@ class ImportWorker
         $auto_image_hash = $this->getLocalImage($import_update_dto->auto_url);
         $feed_image_hash = $this->getFeedImageHash($import_update_dto->feed_url);
 
-        $comparator = new Comparator($auto_image_hash, $feed_image_hash);
-
         $path = $this->image_worker->getImageService()->makePath($import_update_dto->getPathParams());
 
         // связываем изображения из фида с существующими в бд
@@ -50,10 +48,10 @@ class ImportWorker
         // догружаем недостающие изображения
         $feed_image_hash = $this->add($feed_image_hash, $auto_image_hash, $path);
         // удаляем лишние изображения
-        $feed_image_hash = $this->delete($feed_image_hash, $auto_image_hash);
+        $this->delete($feed_image_hash, $auto_image_hash);
 
         // отправить обновленный список изображений
-        $result = $this->image_worker->sendServiceUrlList($feed_image_hash, $import_update_dto->auto_id);
+        $result = $this->image_worker->sendServiceUrlList($feed_image_hash->toArray(), $import_update_dto->auto_id);
 
         // обновить external_id у изображений
         $this->image_worker->addExternalId($feed_image_hash, $result);

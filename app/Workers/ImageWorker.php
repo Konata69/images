@@ -194,11 +194,12 @@ class ImageWorker
     /**
      * Дописать external_id в модели
      *
-     * @param array $image_list
+     * @param Collection $image_list
      * @param $response
      */
-    public function addExternalId($image_list, $response)
+    public function addExternalId(Collection $image_list, $response)
     {
+        //TODO Рефакторинг метода
         $image_list_external = collect($response['data']['image']);
         foreach ($image_list as $image) {
             $image_external = $image_list_external->where('feed_url', $image->url)->first();
