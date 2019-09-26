@@ -32,7 +32,7 @@ class LinkTest extends TestCase
         $this->auto_image_hash = new Collection();
         $auto_item1 = new ImageAuto(['url' => 'url1', 'hash' => 'hash1', 'image_hash' => 'image_hash1']);
         $auto_item1->id = 1;
-        $auto_item2 = new ImageAuto(['url' => 'url2', 'hash' => 'hash1', 'image_hash' => 'image_hash2']);
+        $auto_item2 = new ImageAuto(['url' => 'url2', 'hash' => 'hash2', 'image_hash' => 'image_hash2']);
         $auto_item2->id = 2;
         $this->auto_image_hash->add($auto_item1);
         $this->auto_image_hash->add($auto_item2);
