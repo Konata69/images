@@ -14,6 +14,10 @@ class ImageImportUpdate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $timeout = 360;
+
+    public $tries = 2;
+
     /**
      * @var ImportUpdateDTO
      */
