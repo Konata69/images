@@ -50,6 +50,10 @@ class ImportWorker
         // удаляем лишние изображения
         $this->delete($feed_image_hash, $auto_image_hash);
 
+        // дописываем сервисные ссылки
+        $feed_image_hash->each(function (BaseImage $item) {
+            $item->setServiceUrl();
+        });
         // отправить обновленный список изображений
         $result = $this->image_worker->sendServiceUrlList($feed_image_hash->toArray(), $import_update_dto->auto_id);
 
