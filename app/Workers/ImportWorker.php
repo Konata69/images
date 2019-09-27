@@ -105,7 +105,7 @@ class ImportWorker
             }
 
             // загрузить и сохранить изображение в бд
-            $new_image = $this->image_worker->getImageService()->loadSingle($feed_item->url, $path);
+            $new_image = $this->image_worker->getImageService()->loadSingle($feed_item, $path);
 
             return $new_image;
         });

@@ -130,16 +130,15 @@ abstract class BaseService
     /**
      * Загрузить одно изображение по урлу в указанную директорию
      *
-     * @param string $url
+     * @param BaseImage $image
      * @param string $path
      *
      * @return BaseImage
      */
-    public function loadSingle(string $url, string $path): BaseImage
+    public function loadSingle(BaseImage $image, string $path): BaseImage
     {
-        $image = $this->model->newInstance();
-        $image->image_hash = $this->hasher->hash($url)->toHex();
-        $image->src = $this->file->prepareAndSavePhoto($url, $path, true);
+        $image->image_hash = $this->hasher->hash($image->url)->toHex();
+        $image->src = $this->file->prepareAndSavePhoto($image->url, $path, true);
         $image->thumb = $this->file->makeThumb($image->src);
         $image->save();
 
