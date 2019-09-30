@@ -3,6 +3,7 @@
 namespace App\Services\Image;
 
 use App\Models\Image\BaseImage;
+use Illuminate\Database\Eloquent\Collection;
 use Throwable;
 
 class FinderService
@@ -88,6 +89,18 @@ class FinderService
         }
 
         return $data;
+    }
+
+    /**
+     * Поиск изображений по списку урлов локально
+     *
+     * @param array $url_list
+     *
+     * @return Collection
+     */
+    public function byUrlLocal(array $url_list): Collection
+    {
+        return $this->model->newQuery()->whereIn('url', $url_list)->get();
     }
 
     /**

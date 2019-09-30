@@ -8,6 +8,7 @@ use App\Services\BaseApiClient;
 use App\Services\Image\AutoService;
 use App\Services\Image\BaseService;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 /**
@@ -44,6 +45,16 @@ class ImageWorker
         $worker = App::make(ImageWorker::class, ['image_service' => $image_service]);
 
         return $worker;
+    }
+
+    public function getImageService(): BaseService
+    {
+        return $this->image_service;
+    }
+
+    public function setImageService(BaseService $service)
+    {
+        $this->image_service = $service;
     }
 
     /**
@@ -156,13 +167,39 @@ class ImageWorker
     }
 
     /**
+     * Обновить существующее изображение по ссылке (например, из фида)
+     * и вернуть коллекцию обновленных изображений
+     *
+     * @param Collection $image
+     * @param int $card_id
+     * @param int $auto_id
+     *
+     * @return Collection
+     */
+    public function updateByUrl(Collection $image, int $card_id, int $auto_id): Collection
+    {
+        // загрузить изображение
+        $path = [
+            'card_id' => $card_id,
+            'auto_id' => $auto_id,
+        ];
+        $path = $this->image_service->makePath($path);
+
+        // сохранить изображение в сервисе
+        $data = $this->image_service->update($image, $path);
+
+        return $data;
+    }
+
+    /**
      * Дописать external_id в модели
      *
-     * @param array $image_list
+     * @param Collection $image_list
      * @param $response
      */
-    protected function addExternalId($image_list, $response)
+    public function addExternalId(Collection $image_list, $response)
     {
+        //TODO Рефакторинг метода
         $image_list_external = collect($response['data']['image']);
         foreach ($image_list as $image) {
             $image_external = $image_list_external->where('feed_url', $image->url)->first();
@@ -213,7 +250,7 @@ class ImageWorker
      *
      * @return array
      */
-    protected function sendServiceUrlList(array $image_list, int $auto_id): array
+    public function sendServiceUrlList(array $image_list, int $auto_id): array
     {
         // сделать запрос к autoxml на получение файла
         $url = $this->base_url . 'api/image-service/result-import';

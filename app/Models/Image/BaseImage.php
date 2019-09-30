@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Базовый класс модели изображения
+ *
+ * @property int|null $external_id
+ * если int - есть связанное изображение в основном проекте
+ * если null - этого изображения нет в основном проекте
  */
 class BaseImage extends Model
 {
