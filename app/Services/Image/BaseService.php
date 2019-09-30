@@ -5,6 +5,7 @@ namespace App\Services\Image;
 use App\Models\Image\BaseImage;
 use Exception;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Jenssegers\ImageHash\ImageHash;
 use Throwable;
 
@@ -127,6 +128,51 @@ abstract class BaseService
     }
 
     /**
+     * Загрузить одно изображение по урлу в указанную директорию
+     *
+     * @param BaseImage $image
+     * @param string $path
+     *
+     * @return BaseImage
+     */
+    public function loadSingle(BaseImage $image, string $path): BaseImage
+    {
+        $image->image_hash = $this->hasher->hash($image->url)->toHex();
+        $image->src = $this->file->prepareAndSavePhoto($image->url, $path, true);
+        $image->thumb = $this->file->makeThumb($image->src);
+        $image->save();
+
+        return $image;
+    }
+
+    /**
+     * Обновить изображения
+     *
+     * @param Collection $image_list
+     * @param string $path
+     *
+     * @return Collection
+     */
+    public function update(Collection $image_list, string $path): Collection
+    {
+        $image_list_new = new Collection();
+
+        // обработать список ссылок, пройтись по ссылкам и достать изображение
+        foreach ($image_list as $image) {
+            /** @var BaseImage $image */
+            $image->image_hash = $this->hasher->hash($image->url)->toHex();
+            $image->src = $this->file->prepareAndSavePhoto($image->url, $path, true);
+            $image->thumb = $this->file->makeThumb($image->src);
+            $image->save();
+
+            $image->setServiceUrl();
+            $image_list_new->add($image);
+        }
+
+        return $image_list_new;
+    }
+
+    /**
      * Загрузка изображения напрямую
      *
      * @param UploadedFile $file
@@ -209,6 +255,26 @@ abstract class BaseService
         }
 
         return $result;
+    }
+
+    /**
+     * Удалить запись изображения в бд и файлы по локальному id
+     *
+     * @param int $id
+     */
+    public function removeByLocalId(int $id)
+    {
+        $image = $this->model->newQuery()->find($id);
+        if(!empty($image)) {
+            FileService::removeFile($image->src);
+            FileService::removeFile($image->thumb);
+
+            try {
+                $image->delete();
+            } catch (Exception $e) {
+                //TODO записать в лог
+            }
+        }
     }
 
     /**

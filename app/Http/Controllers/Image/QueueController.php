@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Image;
 
+use App\DTO\ImportUpdateDTO;
 use App\Http\Controllers\Controller;
+use App\Jobs\ImageImportUpdate;
 use App\Jobs\ImageLoad;
 use App\Jobs\ImageLoadImport;
 use App\Jobs\ImageMigrate;
@@ -102,6 +104,14 @@ class QueueController extends Controller
 
     public function importUpdate(Request $request)
     {
+        $import_update_dto = new ImportUpdateDTO(
+            $request->feed_url,
+            $request->auto_url,
+            $request->card_id,
+            $request->auto_id,
+            $request->import_id
+        );
 
+        ImageImportUpdate::dispatch($import_update_dto);
     }
 }
