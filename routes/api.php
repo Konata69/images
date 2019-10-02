@@ -72,7 +72,7 @@ Route::group(['middleware' => 'auth.basic'], function () {
         });
     });
 
-    Route::prefix('/record')->namespace('Calltracking')->group(function () {
+    Route::prefix('/calltracking')->namespace('Calltracking')->group(function () {
         Route::post('/store', 'RecordController@store')->name('record-store');
     });
 });
