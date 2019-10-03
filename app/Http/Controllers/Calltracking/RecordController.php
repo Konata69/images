@@ -17,7 +17,7 @@ class RecordController extends Controller
         $src = $this->saveFile($record);
         $model = $this->saveModel($src, $record->call_id, $record->type);
 
-        return response()->json($model->file_path);
+        return response()->json(['service_src' => url($model->file_path)]);
     }
 
     /**
