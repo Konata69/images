@@ -71,4 +71,8 @@ Route::group(['middleware' => 'auth.basic'], function () {
             Route::post('/by-hash', 'AutoController@byHashView')->name($route . '-by-hash-view');
         });
     });
+
+    Route::prefix('/calltracking')->namespace('Calltracking')->group(function () {
+        Route::post('/store', 'RecordController@store')->name('record-store');
+    });
 });
