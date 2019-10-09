@@ -76,6 +76,10 @@
     echo "linking image_blocked directory"
     rm -rf {{ $dir_active }}/public/image_blocked
     ln -nfs {{ $dir }}/public/image_blocked {{ $dir_active }}/public/image_blocked
+    
+    echo "linking record directory"
+    rm -rf {{ $dir_active }}/public/record
+    ln -nfs {{ $dir }}/public/record {{ $dir_active }}/public/record
 
     echo 'linking current release'
     ln -nfs {{ $dir_active }} {{ $dir_current }}
