@@ -3,21 +3,29 @@
 namespace App\Http\Controllers\Calltracking;
 
 use App\DTO\RecordDTO;
+use App\Helpers\Helper;
 use App\Models\Calltracking\Record;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
+use Throwable;
 
 class RecordController extends Controller
 {
     public function store(Request $request)
     {
-        $record = RecordDTO::makeFromArray($request->record);
+        try {
+            $record = RecordDTO::makeFromArray($request->record);
 
-        $src = $this->saveFile($record);
-        $model = $this->saveModel($src, $record->call_id, $record->type);
+            $src = $this->saveFile($record);
+            $model = $this->saveModel($src, $record->call_id, $record->type);
 
-        return response()->json(['service_src' => url($model->file_path)]);
+            $result = ['service_src' => url($model->file_path)];
+        } catch (Throwable $e) {
+            (new Helper)->logError('calltracking_migrate', $e->getMessage());
+        }
+
+        return response()->json($result);
     }
 
     /**
