@@ -32,6 +32,11 @@ abstract class BaseImageJob implements ShouldQueue
     protected $image_type;
 
     /**
+     * @var string - базовый урл, с которого сделали запрос
+     */
+    protected $base_url;
+
+    /**
      * @var ImageWorker
      */
     protected $worker;
@@ -41,11 +46,13 @@ abstract class BaseImageJob implements ShouldQueue
      *
      * @param int $image_id
      * @param string $image_type
+     * @param string $base_url
      */
-    public function __construct(int $image_id, string $image_type)
+    public function __construct(int $image_id, string $image_type, string $base_url)
     {
         $this->image_id = $image_id;
         $this->image_type = $image_type;
+        $this->base_url = $base_url;
     }
 
     /**
@@ -74,6 +81,9 @@ abstract class BaseImageJob implements ShouldQueue
             return;
         }
 
-        $this->worker = App::make(ImageWorker::class, ['image_service' => $image_service]);
+        $this->worker = App::make(ImageWorker::class, [
+            'image_service' => $image_service,
+            'base_url' => $this->base_url,
+        ]);
     }
 }

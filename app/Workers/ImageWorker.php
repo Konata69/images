@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\App;
 class ImageWorker
 {
     /**
-     * @var string
+     * @var string - базовый урл сервиса, с которым общаемся
      */
     protected $base_url;
 
@@ -31,18 +31,21 @@ class ImageWorker
      */
     protected $image_service;
 
-    public function __construct(BaseApiClient $api, BaseService $image_service)
+    public function __construct(BaseApiClient $api, BaseService $image_service, string $base_url)
     {
         $this->api = $api;
         $this->image_service = $image_service;
-        $this->base_url = config('image.target_url');
+        $this->base_url = $base_url . '/';
     }
 
-    public static function makeWithAutoService(): ImageWorker
+    public static function makeWithAutoService(string $base_url): ImageWorker
     {
         $image_service = App::make(AutoService::class);
         /** @var ImageWorker $worker */
-        $worker = App::make(ImageWorker::class, ['image_service' => $image_service]);
+        $worker = App::make(ImageWorker::class, [
+            'image_service' => $image_service,
+            'base_url' => $base_url,
+        ]);
 
         return $worker;
     }
