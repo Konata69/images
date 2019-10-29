@@ -20,13 +20,14 @@ class ImportWorker
 
     /**
      * @param ImageWorker|null $image_worker
+     * @param string $base_url
      */
-    public function __construct(?ImageWorker $image_worker = null)
+    public function __construct(string $base_url, ?ImageWorker $image_worker = null)
     {
         if ($image_worker instanceof ImageWorker) {
             $this->image_worker = $image_worker;
         } else {
-            $this->image_worker = ImageWorker::makeWithAutoService();
+            $this->image_worker = ImageWorker::makeWithAutoService($base_url);
         }
     }
 

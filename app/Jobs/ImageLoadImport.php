@@ -38,17 +38,24 @@ class ImageLoadImport implements ShouldQueue
     protected $auto_id;
 
     /**
+     * @var string
+     */
+    protected $base_url;
+
+    /**
      * Create a new job instance.
      *
      * @param array $url_list
      * @param int $card_id
      * @param int $auto_id
+     * @param string $base_url
      */
-    public function __construct(array $url_list, int $card_id, int $auto_id)
+    public function __construct(array $url_list, int $card_id, int $auto_id, string $base_url)
     {
         $this->url_list = $url_list;
         $this->auto_id = $auto_id;
         $this->card_id = $card_id;
+        $this->base_url = $base_url;
     }
 
     /**
@@ -58,7 +65,7 @@ class ImageLoadImport implements ShouldQueue
      */
     public function handle()
     {
-        $worker = ImageWorker::makeWithAutoService();
+        $worker = ImageWorker::makeWithAutoService($this->base_url);
         $worker->loadByUrl($this->url_list, $this->card_id, $this->auto_id);
     }
 }
