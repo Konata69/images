@@ -24,11 +24,18 @@ class ImageImportUpdate implements ShouldQueue
     protected $import_update_dto;
 
     /**
-     * @param ImportUpdateDTO $import_update_dto
+     * @var
      */
-    public function __construct(ImportUpdateDTO $import_update_dto)
+    protected $base_url;
+
+    /**
+     * @param ImportUpdateDTO $import_update_dto
+     * @param string $base_url
+     */
+    public function __construct(ImportUpdateDTO $import_update_dto, string $base_url)
     {
         $this->import_update_dto = $import_update_dto;
+        $this->base_url = $base_url;
     }
 
     /**
@@ -38,6 +45,6 @@ class ImageImportUpdate implements ShouldQueue
      */
     public function handle()
     {
-        (new ImportWorker())->update($this->import_update_dto);
+        (new ImportWorker($this->base_url))->update($this->import_update_dto);
     }
 }
