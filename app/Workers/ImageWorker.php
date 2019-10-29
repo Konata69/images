@@ -2,6 +2,7 @@
 
 namespace App\Workers;
 
+use App\Helpers\Helper;
 use App\Models\Image\BaseImage;
 use App\Models\Image\ImageAuto;
 use App\Services\BaseApiClient;
@@ -114,6 +115,7 @@ class ImageWorker
             $image = $this->image_service->saveFromBase64($result['data']['image']);
         } else {
             //TODO обработать возможные ошибки
+            (new Helper)->logError('image_migrate', print_r($result, true));
             throw new Exception('Image can not be loaded');
         }
 
