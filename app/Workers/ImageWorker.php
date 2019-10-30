@@ -321,6 +321,8 @@ class ImageWorker
     {
         // сделать запрос к autoxml на получение файла
         $url = $this->base_url . 'api/image-service/image';
+        //TODO Убрать после отладки
+        (new Helper)->logError('image_migrate', $url);
         $data = [
             'image_id' => $image_id,
             'image_type' => $image_type,
