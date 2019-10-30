@@ -87,6 +87,12 @@ class QueueController extends Controller
         } catch (Throwable $e) {
             (new Helper)->logError('image_migrate', $e->getMessage());
             (new Helper)->logError('image_migrate', $e->getTraceAsString());
+            $data = [
+                'success' => false,
+                'error' => [
+                    'message' => $e->getMessage(),
+                ],
+            ];
         }
 
         return response()->json($data);
