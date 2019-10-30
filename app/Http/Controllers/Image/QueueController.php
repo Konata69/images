@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Image;
 
 use App\DTO\ImportUpdateDTO;
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Jobs\ImageImportUpdate;
 use App\Jobs\ImageLoad;
@@ -12,6 +13,7 @@ use App\Models\Image\ImageAuto;
 use App\Workers\ImageWorker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Throwable;
 
 class QueueController extends Controller
 {
@@ -68,19 +70,24 @@ class QueueController extends Controller
      */
     public function migrate(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        try {
+            $base_url = $request->getSchemeAndHttpHost();
 
-        $image_id_list = collect($request->image_id_list)->map(function ($item) {
-            return (int) $item;
-        });
-        $images = ImageAuto::whereIn('external_id', $image_id_list)->get()->pluck('external_id')->toArray();
+            $image_id_list = collect($request->image_id_list)->map(function ($item) {
+                return (int)$item;
+            });
+            $images = ImageAuto::whereIn('external_id', $image_id_list)->get()->pluck('external_id')->toArray();
 
-        $diff = $image_id_list->diff($images);
-        $diff->each(function ($item) use ($base_url) {
-            ImageMigrate::dispatch($item, 'auto', $base_url);
-        });
+            $diff = $image_id_list->diff($images);
+            $diff->each(function ($item) use ($base_url) {
+                ImageMigrate::dispatch($item, 'auto', $base_url);
+            });
 
-        $data = ['success' => true];
+            $data = ['success' => true];
+        } catch (Throwable $e) {
+            (new Helper)->logError('image_migrate', $e->getMessage());
+            (new Helper)->logError('image_migrate', $e->getTraceAsString());
+        }
 
         return response()->json($data);
     }
