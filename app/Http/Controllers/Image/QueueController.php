@@ -26,7 +26,7 @@ class QueueController extends Controller
      */
     public function load(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        $base_url = $request->base_url;
 
         $image_id = $request->image_id;
         // тип изображения (авто/фотобанк)
@@ -48,7 +48,7 @@ class QueueController extends Controller
      */
     public function import(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        $base_url = $request->base_url;
 
         $url_list = collect($request->url_list);
         $card_id = (int) $request->card_id;
@@ -71,7 +71,7 @@ class QueueController extends Controller
     public function migrate(Request $request)
     {
         try {
-            $base_url = $request->getSchemeAndHttpHost();
+            $base_url = $request->base_url;
 
             $image_id_list = collect($request->image_id_list)->map(function ($item) {
                 return (int)$item;
@@ -100,7 +100,7 @@ class QueueController extends Controller
 
     public function testImport(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        $base_url = $request->base_url;
         $url_list = $request->url;
         $card_id = (int) $request->card_id;
         $auto_id = (int) $request->auto_id;
@@ -124,7 +124,7 @@ class QueueController extends Controller
 
     public function importUpdate(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        $base_url = $request->base_url;
 
         $import_update_dto = new ImportUpdateDTO(
             $request->feed_url,
