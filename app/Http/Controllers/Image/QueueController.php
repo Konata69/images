@@ -10,6 +10,7 @@ use App\Jobs\ImageLoad;
 use App\Jobs\ImageLoadImport;
 use App\Jobs\ImageMigrate;
 use App\Models\Image\ImageAuto;
+use App\Models\Image\ImagePhotobank;
 use App\Workers\ImageWorker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -72,27 +73,29 @@ class QueueController extends Controller
     {
         try {
             $base_url = $request->base_url;
+            $image_type = $request->image_type;
 
             $image_id_list = collect($request->image_id_list)->map(function ($item) {
                 return (int)$item;
             });
-            $images = ImageAuto::whereIn('external_id', $image_id_list)->get()->pluck('external_id')->toArray();
+            if ($image_type === 'auto') {
+                $images = ImageAuto::whereIn('external_id', $image_id_list)->get()->pluck('external_id')->toArray();
+            } elseif ($image_type === 'photobank') {
+                $images = ImagePhotobank::whereIn('external_id', $image_id_list)->get()->pluck('external_id')->toArray();
+            } else {
+                return $this->responseWithError('Unsupported image type ' . $image_type);
+            }
 
             $diff = $image_id_list->diff($images);
-            $diff->each(function ($item) use ($base_url) {
-                ImageMigrate::dispatch($item, 'auto', $base_url);
+            $diff->each(function ($item) use ($image_type, $base_url) {
+                ImageMigrate::dispatch($item, $image_type, $base_url);
             });
 
             $data = ['success' => true];
         } catch (Throwable $e) {
             (new Helper)->logError('image_migrate', $e->getMessage());
             (new Helper)->logError('image_migrate', $e->getTraceAsString());
-            $data = [
-                'success' => false,
-                'error' => [
-                    'message' => $e->getMessage(),
-                ],
-            ];
+            return $this->responseWithError($e->getMessage());
         }
 
         return response()->json($data);
@@ -135,5 +138,17 @@ class QueueController extends Controller
         );
 
         ImageImportUpdate::dispatch($import_update_dto, $base_url);
+    }
+
+    protected function responseWithError($msg = '')
+    {
+        $data = [
+            'success' => false,
+            'error' => [
+                'message' => $msg,
+            ],
+        ];
+
+        return response()->json($data);
     }
 }
