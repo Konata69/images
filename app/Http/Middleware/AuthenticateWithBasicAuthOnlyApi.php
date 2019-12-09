@@ -25,6 +25,6 @@ class AuthenticateWithBasicAuthOnlyApi extends AuthenticateWithBasicAuth
             return Redirect::to('/');
         }
 
-        return $next($request);
+        return parent::handle($request, $next, $guard, $field);
     }
 }
