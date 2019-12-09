@@ -11,3 +11,14 @@
 |
 */
 
+
+Auth::routes([
+    'register' => false,
+    'reset' => false,
+    'verify' => false,
+]);
+Route::get('logout', 'Auth\LoginController@logout')->name('logout');
+
+Route::any('{query}', function() {
+    return redirect('/login');
+})->where('query', '.*');
