@@ -11,3 +11,13 @@
 |
 */
 
+
+Auth::routes([
+    'register' => false,
+    'reset' => false,
+    'verify' => false,
+]);
+
+Route::any('{query}', function() {
+    return redirect('/login');
+})->where('query', '.*');
