@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
 //Route::post('/image/queue/test-migrate', 'Image\QueueController@testMigrate')->name('image-queue-test-migrate');
 Route::post('/image/queue/test-import', 'Image\QueueController@testImport')->name('image-queue-test-import');
 
-Route::group(['middleware' => 'auth.basic'], function () {
+Route::group(['middleware' => 'auth.basic.only.api'], function () {
     Route::prefix('/image')->namespace('Image')->group(function () {
         // работа через очередь
         Route::prefix('/queue')->group( function () {
