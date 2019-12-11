@@ -143,6 +143,8 @@ class ImageWorker
             // в случае ошибок фейлим таску, бросаем исключение
             (new Helper)->logError('image_migrate', print_r($result, true));
             throw new Exception('Can not send service url');
+        } else {
+            (new Helper)->logError('image_migrate', print_r($result, true));
         }
         $image->setMigrated();
     }
