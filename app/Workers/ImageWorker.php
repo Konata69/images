@@ -332,7 +332,7 @@ class ImageWorker
         $header[] = 'X-Requested-With: XMLHttpRequest';
 
         // первый запрос - на получение файла изображения
-        $result = $this->api->post($url, $data, $header, false);
+        $result = $this->api->post($url, $data, $header);
 
         return $result;
     }

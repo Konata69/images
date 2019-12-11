@@ -39,7 +39,7 @@ class BaseApiClient
      * - error (array) - ошибки
      * - info (array) - вспомогательная информация
      */
-    public function post($url, $data, $header = [], $ssl = true)
+    public function post($url, $data, $header = [], $ssl = false)
     {
         $curl = curl_init();
 
