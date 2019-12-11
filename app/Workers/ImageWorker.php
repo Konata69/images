@@ -115,7 +115,10 @@ class ImageWorker
             $image = $this->image_service->saveFromBase64($result['data']['image']);
         } else {
             //TODO обработать возможные ошибки
-            (new Helper)->logError('image_migrate', 'loadImage failed');
+            $is_written = (new Helper)->logError('image_migrate', 'loadImage failed');
+            if ((bool) $is_written === false) {
+                throw new Exception('is_written ' . print_r($is_written, true));
+            }
             (new Helper)->logError('image_migrate', print_r($result, true));
             throw new Exception('Image can not be loaded');
         }
