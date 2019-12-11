@@ -141,6 +141,8 @@ class ImageWorker
         $result = $this->sendServiceUrl($image, $image_type);
         if ($this->hasErrors($result)) {
             // в случае ошибок фейлим таску, бросаем исключение
+            (new Helper)->logError('image_migrate', print_r($result, true));
+            throw new Exception('Can not send service url');
         }
         $image->setMigrated();
     }
