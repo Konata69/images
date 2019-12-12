@@ -148,7 +148,8 @@
     echo '**************************************'
 
     cd {{ $dir_current }}
-    php artisan horizon
+    php artisan horizon:purge
+    php artisan horizon:terminate
 @endtask
 
 @macro('deploy')
