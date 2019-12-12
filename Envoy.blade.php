@@ -142,6 +142,15 @@
     php artisan queue:restart
 @endtask
 
+@task ('restart_horizon')
+    echo '**************************************'
+    echo '*            restart horizon         *'
+    echo '**************************************'
+
+    cd {{ $dir_current }}
+    php artisan horizon
+@endtask
+
 @macro('deploy')
     clone
     composer
@@ -153,4 +162,5 @@
     symlink
     remove_dir
     restart_queue
+    restart_horizon
 @endmacro
