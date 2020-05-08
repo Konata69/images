@@ -47,6 +47,7 @@ class BaseImage extends Model
     public function setMigrated(bool $value = true)
     {
         $this->migrated = $value;
+        $this->unsetServiceUrl();
         $this->save();
     }
 
@@ -59,6 +60,12 @@ class BaseImage extends Model
     {
         $this->is_blocked = $value;
         $this->save();
+    }
+
+    public function unsetServiceUrl()
+    {
+        unset($this->service_src);
+        unset($this->service_thumb);
     }
 
     /**

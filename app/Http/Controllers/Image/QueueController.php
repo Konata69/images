@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Image;
 
 use App\DTO\ImportUpdateDTO;
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Jobs\ImageImportUpdate;
 use App\Jobs\ImageLoad;
 use App\Jobs\ImageLoadImport;
 use App\Jobs\ImageMigrate;
 use App\Models\Image\ImageAuto;
+use App\Models\Image\ImagePhotobank;
 use App\Workers\ImageWorker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Throwable;
 
 class QueueController extends Controller
 {
@@ -24,7 +27,7 @@ class QueueController extends Controller
      */
     public function load(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        $base_url = $request->base_url;
 
         $image_id = $request->image_id;
         // тип изображения (авто/фотобанк)
@@ -46,7 +49,7 @@ class QueueController extends Controller
      */
     public function import(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        $base_url = $request->base_url;
 
         $url_list = collect($request->url_list);
         $card_id = (int) $request->card_id;
@@ -68,26 +71,39 @@ class QueueController extends Controller
      */
     public function migrate(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        try {
+            $base_url = $request->base_url;
+            $image_type = $request->image_type;
 
-        $image_id_list = collect($request->image_id_list)->map(function ($item) {
-            return (int) $item;
-        });
-        $images = ImageAuto::whereIn('external_id', $image_id_list)->get()->pluck('external_id')->toArray();
+            $image_id_list = collect($request->image_id_list)->map(function ($item) {
+                return (int)$item;
+            });
+            if ($image_type === 'auto') {
+                $images = ImageAuto::whereIn('external_id', $image_id_list)->get()->pluck('external_id')->toArray();
+            } elseif ($image_type === 'photobank') {
+                $images = ImagePhotobank::whereIn('external_id', $image_id_list)->get()->pluck('external_id')->toArray();
+            } else {
+                return $this->responseWithError('Unsupported image type ' . $image_type);
+            }
 
-        $diff = $image_id_list->diff($images);
-        $diff->each(function ($item) use ($base_url) {
-            ImageMigrate::dispatch($item, 'auto', $base_url);
-        });
+            $diff = $image_id_list->diff($images);
+            $diff->each(function ($item) use ($image_type, $base_url) {
+                ImageMigrate::dispatch($item, $image_type, $base_url);
+            });
 
-        $data = ['success' => true];
+            $data = ['success' => true];
+        } catch (Throwable $e) {
+            (new Helper)->logError('image_migrate', $e->getMessage());
+            (new Helper)->logError('image_migrate', $e->getTraceAsString());
+            return $this->responseWithError($e->getMessage());
+        }
 
         return response()->json($data);
     }
 
     public function testImport(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        $base_url = $request->base_url;
         $url_list = $request->url;
         $card_id = (int) $request->card_id;
         $auto_id = (int) $request->auto_id;
@@ -111,7 +127,7 @@ class QueueController extends Controller
 
     public function importUpdate(Request $request)
     {
-        $base_url = $request->getSchemeAndHttpHost();
+        $base_url = $request->base_url;
 
         $import_update_dto = new ImportUpdateDTO(
             $request->feed_url,
@@ -122,5 +138,17 @@ class QueueController extends Controller
         );
 
         ImageImportUpdate::dispatch($import_update_dto, $base_url);
+    }
+
+    protected function responseWithError($msg = '')
+    {
+        $data = [
+            'success' => false,
+            'error' => [
+                'message' => $msg,
+            ],
+        ];
+
+        return response()->json($data);
     }
 }

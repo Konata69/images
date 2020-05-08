@@ -32,12 +32,14 @@ class BaseApiClient
      * @param string $url ссылка запроса
      * @param array $data данные запроса
      * @param array $header заголовки
+     * @param bool $ssl
+     *
      * @return array массив ответа сервера
      * - data (array) - массив данных ответа сервера
      * - error (array) - ошибки
      * - info (array) - вспомогательная информация
      */
-    public function post($url, $data, $header = [])
+    public function post($url, $data, $header = [], $ssl = false)
     {
         $curl = curl_init();
 
@@ -46,6 +48,7 @@ class BaseApiClient
         curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, $ssl);
 
         $result = $this->curlResult($curl);
 

@@ -141,6 +141,10 @@ class ImageWorker
         $result = $this->sendServiceUrl($image, $image_type);
         if ($this->hasErrors($result)) {
             // в случае ошибок фейлим таску, бросаем исключение
+            (new Helper)->logError('image_migrate', print_r($result, true));
+            throw new Exception('Can not send service url');
+        } else {
+            (new Helper)->logError('image_migrate', print_r($result, true));
         }
         $image->setMigrated();
     }
@@ -321,8 +325,6 @@ class ImageWorker
     {
         // сделать запрос к autoxml на получение файла
         $url = $this->base_url . 'api/image-service/image';
-        //TODO Убрать после отладки
-        (new Helper)->logError('image_migrate', $url);
         $data = [
             'image_id' => $image_id,
             'image_type' => $image_type,

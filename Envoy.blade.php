@@ -37,6 +37,24 @@
     composer install --prefer-dist --no-scripts -q -o
 @endtask
 
+@task('npm_install')
+    echo '**************************************'
+    echo '*             npm install            *'
+    echo '**************************************'
+
+    cd {{ $dir_active }}
+    npm install
+@endtask
+
+@task('npm_run')
+    echo '**************************************'
+    echo '*               npm run              *'
+    echo '**************************************'
+
+    cd {{ $dir_active }}
+    npm run production
+@endtask
+
 @task ('env_symlink')
     echo '**************************************'
     echo '*         enviroment symlink         *'
@@ -76,7 +94,7 @@
     echo "linking image_blocked directory"
     rm -rf {{ $dir_active }}/public/image_blocked
     ln -nfs {{ $dir }}/public/image_blocked {{ $dir_active }}/public/image_blocked
-    
+
     echo "linking record directory"
     rm -rf {{ $dir_active }}/public/record
     ln -nfs {{ $dir }}/public/record {{ $dir_active }}/public/record
@@ -124,13 +142,26 @@
     php artisan queue:restart
 @endtask
 
+@task ('restart_horizon')
+    echo '**************************************'
+    echo '*            restart horizon         *'
+    echo '**************************************'
+
+    cd {{ $dir_current }}
+    php artisan horizon:purge
+    php artisan horizon:terminate
+@endtask
+
 @macro('deploy')
     clone
     composer
+    npm_install
+    npm_run
     env_symlink
     migrate
     config_cache
     symlink
     remove_dir
     restart_queue
+    restart_horizon
 @endmacro
